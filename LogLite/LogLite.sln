@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29418.71
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogLite.Core", "LogLite.Core\LogLite.Core.csproj", "{8ACC1DC3-4EF5-4AAE-873C-BE46D143447E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogLite.Tests", "LogLite.Tests\LogLite.Tests.csproj", "{C90E75B4-F7C9-45DD-9C74-8B7ED1F97A89}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8ACC1DC3-4EF5-4AAE-873C-BE46D143447E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8ACC1DC3-4EF5-4AAE-873C-BE46D143447E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8ACC1DC3-4EF5-4AAE-873C-BE46D143447E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8ACC1DC3-4EF5-4AAE-873C-BE46D143447E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C90E75B4-F7C9-45DD-9C74-8B7ED1F97A89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C90E75B4-F7C9-45DD-9C74-8B7ED1F97A89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C90E75B4-F7C9-45DD-9C74-8B7ED1F97A89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C90E75B4-F7C9-45DD-9C74-8B7ED1F97A89}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {02DF0278-6311-40CF-A29D-A5DF40E6A28E}
+	EndGlobalSection
+EndGlobal
