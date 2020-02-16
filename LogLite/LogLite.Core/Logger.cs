@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LogLite.Core
@@ -11,14 +13,37 @@ namespace LogLite.Core
     /// Thread safe singleton implementation. The Logger class is responsible for maintaining a queue of log statements ready to be logged, 
     /// and will flush these to the appropriate sinks.
     /// </summary>
-	public sealed class Logger : IDisposable
+	public sealed class Logger : IDisposable, ILogger
     {
+        private class LoggerScope : IDisposable
+        {
+            private Logger logger;
+
+            internal LoggerScope(Logger logger)
+            {
+                this.logger = logger;
+            }
+
+            public void Dispose()
+            {
+                int threadHash = Thread.CurrentThread.GetHashCode();
+
+                lock (logger.scopeLookupLock)
+                {
+                    logger.scopeLookup.Remove(threadHash);
+                }
+            }
+        }
+
         private readonly string rootDirectory;
         private readonly string logFileDirectory;
 
         private readonly List<string> logQueue;
+        private readonly Dictionary<int, string> scopeLookup;
 
         private readonly object logQueueLock;
+        private readonly object scopeLookupLock;
+        private readonly object writeLock;
 
         private Task currentTask = null;
         
@@ -28,8 +53,11 @@ namespace LogLite.Core
             logFileDirectory = Path.Combine(rootDirectory, "/Logs");
 
             logQueue = new List<string>();
+            scopeLookup = new Dictionary<int, string>();
 
             logQueueLock = new object();
+            scopeLookupLock = new object();
+            writeLock = new object();
         }   
 
         public static Logger Instance => Nested.instance;
@@ -44,11 +72,29 @@ namespace LogLite.Core
             internal static readonly Logger instance = new Logger();
         }
 
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        {
+            string statment = formatter(state, exception);
+
+            Log(statment);
+        }
+
         public void Log(string statement)
         {
+            int threadHash = Thread.CurrentThread.GetHashCode();
+            string scopeMessage = string.Empty;
+
+            lock (scopeLookupLock)
+            {
+                if (scopeLookup.ContainsKey(threadHash))
+                {
+                    scopeMessage = scopeLookup[threadHash];
+                }
+            }
+
             lock (logQueueLock)
             {
-                logQueue.Add(statement);
+                logQueue.Add($"[{scopeMessage}] {statement}");
             }
 
             // Flush to disk asynchronously so we don't disrupt the main thread
@@ -57,6 +103,7 @@ namespace LogLite.Core
 
         public void Flush()
         {
+            StringBuilder stringBuilder = new StringBuilder();
             List<string> statements;
             string logFilePath = Path.Combine(logFileDirectory, "logFile.log");
 
@@ -67,21 +114,28 @@ namespace LogLite.Core
                 logQueue.Clear();
             }
 
-            if (!Directory.Exists(logFileDirectory))
-            {
-                Directory.CreateDirectory(logFileDirectory);
-            }
-
-            if (!File.Exists(logFilePath))
-            {
-                File.Create(logFilePath);
-            }     
-
-            using FileStream stream = File.Open(logFilePath, FileMode.Open);
 
             foreach (string item in statements)
             {
-                stream.Write(Encoding.UTF8.GetBytes(item));
+                stringBuilder.AppendLine(item);
+
+            }
+
+            lock (writeLock)
+            {
+                if (!Directory.Exists(logFileDirectory))
+                {
+                    Directory.CreateDirectory(logFileDirectory);
+                }
+
+                if (!File.Exists(logFilePath))
+                {
+                    File.Create(logFilePath);
+                }
+
+                using FileStream stream = File.Open(logFilePath, FileMode.Open);
+
+                stream.Write(Encoding.UTF8.GetBytes(stringBuilder.ToString()));
             }
         }
 
@@ -93,6 +147,25 @@ namespace LogLite.Core
             }
 
             Flush();
+        }
+
+
+        public bool IsEnabled(LogLevel logLevel)
+        {
+            return true;
+        }
+
+        public IDisposable BeginScope<TState>(TState state)
+        {
+            int threadHash = Thread.CurrentThread.GetHashCode();
+            string scopeMessage = state.ToString();
+
+            lock (scopeLookupLock)
+            {
+                scopeLookup.TryAdd(threadHash, scopeMessage);
+            }
+
+            return new LoggerScope(this);
         }
     }
 }

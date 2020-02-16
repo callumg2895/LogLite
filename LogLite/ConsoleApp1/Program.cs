@@ -12,6 +12,15 @@ namespace LogLite.Scratchpad
 
 			logger.Log("Hello, World!");
 
+
+			using (var scope = logger.BeginScope("new scope"))
+			{
+				logger.Log("Hello, World!");
+			};
+
+
+			logger.Log("Hello, World!");
+
 			logger.Dispose();
 		}
 	}
