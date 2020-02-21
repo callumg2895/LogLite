@@ -1,4 +1,5 @@
 ﻿using LogLite.Core;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 
@@ -8,7 +9,7 @@ namespace LogLite.Scratchpad
 	{
 		static void Main(string[] args)
 		{
-			Logger logger = Logger.Instance;
+			LogLiteLogger logger = LogLiteLogger.Instance;
 
 			logger.Log("Hello, World!");
 

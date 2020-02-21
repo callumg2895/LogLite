@@ -13,13 +13,13 @@ namespace LogLite.Core
     /// Thread safe singleton implementation. The Logger class is responsible for maintaining a queue of log statements ready to be logged, 
     /// and will flush these to the appropriate sinks.
     /// </summary>
-	public sealed class Logger : IDisposable, ILogger
+	public sealed class LogLiteLogger : IDisposable, ILogger
     {
         private class LoggerScope : IDisposable
         {
-            private Logger logger;
+            private LogLiteLogger logger;
 
-            internal LoggerScope(Logger logger)
+            internal LoggerScope(LogLiteLogger logger)
             {
                 this.logger = logger;
             }
@@ -47,7 +47,7 @@ namespace LogLite.Core
 
         private Task currentTask = null;
         
-        private Logger()
+        private LogLiteLogger()
         {
             rootDirectory = Path.GetPathRoot(Environment.SystemDirectory);
             logFileDirectory = Path.Combine(rootDirectory, "/Logs");
@@ -60,7 +60,7 @@ namespace LogLite.Core
             writeLock = new object();
         }   
 
-        public static Logger Instance => Nested.instance;
+        public static LogLiteLogger Instance => Nested.instance;
 
         private class Nested
         {
@@ -69,7 +69,7 @@ namespace LogLite.Core
 
             }
 
-            internal static readonly Logger instance = new Logger();
+            internal static readonly LogLiteLogger instance = new LogLiteLogger();
         }
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
