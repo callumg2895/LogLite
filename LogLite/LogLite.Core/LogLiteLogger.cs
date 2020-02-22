@@ -9,10 +9,6 @@ using System.Threading.Tasks;
 
 namespace LogLite.Core
 {
-    /// <summary>
-    /// Thread safe singleton implementation. The Logger class is responsible for maintaining a queue of log statements ready to be logged, 
-    /// and will flush these to the appropriate sinks.
-    /// </summary>
 	public sealed class LogLiteLogger : IDisposable, ILogger
     {
         private class LoggerScope : IDisposable

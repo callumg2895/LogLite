@@ -9,20 +9,25 @@ namespace LogLite.Scratchpad
 	{
 		static void Main(string[] args)
 		{
-			LogLiteLogger logger = LogLiteLogger.Instance;
+			ILoggerProvider logLiteLoggerProvider = new LogLiteLoggerProvider();
+			ILoggerFactory factory = new LoggerFactory();
 
-			logger.Log("Hello, World!");
+			factory.AddProvider(logLiteLoggerProvider);
+
+			ILogger logger = factory.CreateLogger("");
+
+			logger.Log(LogLevel.Information, "Hello, World!");
 
 
 			using (var scope = logger.BeginScope("new scope"))
 			{
-				logger.Log("Hello, World!");
+				logger.Log(LogLevel.Information, "Hello, World!");
 			};
 
 
-			logger.Log("Hello, World!");
+			logger.Log(LogLevel.Information, "Hello, World!");
 
-			logger.Dispose();
+			factory.Dispose();
 		}
 	}
 }
