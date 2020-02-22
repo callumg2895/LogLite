@@ -47,7 +47,7 @@ namespace LogLite.Core
 
         private Task currentTask = null;
         
-        private LogLiteLogger()
+        public LogLiteLogger()
         {
             rootDirectory = Path.GetPathRoot(Environment.SystemDirectory);
             logFileDirectory = Path.Combine(rootDirectory, "/Logs");
@@ -59,18 +59,6 @@ namespace LogLite.Core
             scopeLookupLock = new object();
             writeLock = new object();
         }   
-
-        public static LogLiteLogger Instance => Nested.instance;
-
-        private class Nested
-        {
-            static Nested()
-            {
-
-            }
-
-            internal static readonly LogLiteLogger instance = new LogLiteLogger();
-        }
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
