@@ -8,25 +8,25 @@ namespace LogLite.Core
 {
 	public class LogLiteLoggerProvider : ILoggerProvider
 	{
-		private ConcurrentDictionary<string, LogLiteLogger> loggers;
-		private LogLevel logLevel;
+		private readonly ConcurrentDictionary<string, LogLiteLogger> _loggers;
+		private readonly LogLevel _logLevel;
 
-		public LogLiteLoggerProvider(LogLevel level)
+		public LogLiteLoggerProvider(LogLevel logLevel)
 		{
-			loggers = new ConcurrentDictionary<string, LogLiteLogger>();
-			logLevel = level;
+			_loggers = new ConcurrentDictionary<string, LogLiteLogger>();
+			_logLevel = logLevel;
 		}
 
 		public ILogger CreateLogger(string categoryName)
 		{
-			if (loggers.TryGetValue(categoryName, out LogLiteLogger logger))
+			if (_loggers.TryGetValue(categoryName, out LogLiteLogger logger))
 			{
 				return logger;
 			}
 
-			logger = new LogLiteLogger(logLevel, categoryName);
+			logger = new LogLiteLogger(_logLevel, categoryName);
 
-			if (loggers.TryAdd(categoryName, logger)) 
+			if (_loggers.TryAdd(categoryName, logger)) 
 			{
 				return logger;
 			}
@@ -36,7 +36,7 @@ namespace LogLite.Core
 
 		public void Dispose()
 		{
-			foreach (LogLiteLogger logger in loggers.Values)
+			foreach (LogLiteLogger logger in _loggers.Values)
 			{
 				logger.Dispose();
 			}

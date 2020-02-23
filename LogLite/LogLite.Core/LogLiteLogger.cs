@@ -13,56 +13,56 @@ namespace LogLite.Core
     {
         private class LoggerScope : IDisposable
         {
-            private LogLiteLogger logger;
+            private readonly LogLiteLogger _logger;
 
             internal LoggerScope(LogLiteLogger logger)
             {
-                this.logger = logger;
+                _logger = logger;
             }
 
             public void Dispose()
             {
                 int threadHash = Thread.CurrentThread.GetHashCode();
 
-                lock (logger.scopeLookupLock)
+                lock (_logger._scopeLookupLock)
                 {
-                    logger.scopeLookup.Remove(threadHash);
+                    _logger._scopeLookup.Remove(threadHash);
                 }
             }
         }
 
-        private readonly string rootDirectory;
-        private readonly string logFileDirectory;
+        private readonly string _rootDirectory;
+        private readonly string _logFileDirectory;
 
-        private readonly List<string> logQueue;
-        private readonly Dictionary<int, string> scopeLookup;
-        private readonly LogLevel logLevel;
-        private readonly string category;
+        private readonly List<string> _logQueue;
+        private readonly Dictionary<int, string> _scopeLookup;
+        private readonly LogLevel _logLevel;
+        private readonly string _category;
 
-        private readonly object logQueueLock;
-        private readonly object scopeLookupLock;
-        private readonly object writeLock;
+        private readonly object _logQueueLock;
+        private readonly object _scopeLookupLock;
+        private readonly object _writeLock;
 
         private Task currentTask = null;
         
-        public LogLiteLogger(LogLevel level, string category)
+        public LogLiteLogger(LogLevel logLevel, string category)
         {
-            this.rootDirectory = Path.GetPathRoot(Environment.SystemDirectory);
-            this.logFileDirectory = Path.Combine(rootDirectory, "/Logs");
+            _rootDirectory = Path.GetPathRoot(Environment.SystemDirectory);
+            _logFileDirectory = Path.Combine(_rootDirectory, "/Logs");
 
-            this.logQueue = new List<string>();
-            this.scopeLookup = new Dictionary<int, string>();
-            this.logLevel = level;
-            this.category = category;
+            _logQueue = new List<string>();
+            _scopeLookup = new Dictionary<int, string>();
+            _logLevel = logLevel;
+            _category = category;
 
-            this.logQueueLock = new object();
-            this.scopeLookupLock = new object();
-            this.writeLock = new object();
+            _logQueueLock = new object();
+            _scopeLookupLock = new object();
+            _writeLock = new object();
         }   
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            if (logLevel < this.logLevel)
+            if (logLevel < _logLevel)
             {
                 // The log message should be suppressed if it does not meet the configured minimum level
 
@@ -79,17 +79,17 @@ namespace LogLite.Core
             int threadHash = Thread.CurrentThread.GetHashCode();
             string scopeMessage = string.Empty;
 
-            lock (scopeLookupLock)
+            lock (_scopeLookupLock)
             {
-                if (scopeLookup.ContainsKey(threadHash))
+                if (_scopeLookup.ContainsKey(threadHash))
                 {
-                    scopeMessage = scopeLookup[threadHash];
+                    scopeMessage = _scopeLookup[threadHash];
                 }
             }
 
-            lock (logQueueLock)
+            lock (_logQueueLock)
             {
-                logQueue.Add($"[{category}] [{scopeMessage}] {statement}");
+                _logQueue.Add($"[{_category}] [{scopeMessage}] {statement}");
             }
 
             // Flush to disk asynchronously so we don't disrupt the main thread
@@ -100,13 +100,13 @@ namespace LogLite.Core
         {
             StringBuilder stringBuilder = new StringBuilder();
             List<string> statements;
-            string logFilePath = Path.Combine(logFileDirectory, "logFile.log");
+            string logFilePath = Path.Combine(_logFileDirectory, "logFile.log");
 
-            lock (logQueueLock)
+            lock (_logQueueLock)
             {
-                statements = new List<string>(logQueue);
+                statements = new List<string>(_logQueue);
 
-                logQueue.Clear();
+                _logQueue.Clear();
             }
 
 
@@ -116,11 +116,11 @@ namespace LogLite.Core
 
             }
 
-            lock (writeLock)
+            lock (_writeLock)
             {
-                if (!Directory.Exists(logFileDirectory))
+                if (!Directory.Exists(_logFileDirectory))
                 {
-                    Directory.CreateDirectory(logFileDirectory);
+                    Directory.CreateDirectory(_logFileDirectory);
                 }
 
                 if (!File.Exists(logFilePath))
@@ -155,9 +155,9 @@ namespace LogLite.Core
             int threadHash = Thread.CurrentThread.GetHashCode();
             string scopeMessage = state.ToString();
 
-            lock (scopeLookupLock)
+            lock (_scopeLookupLock)
             {
-                scopeLookup.TryAdd(threadHash, scopeMessage);
+                _scopeLookup.TryAdd(threadHash, scopeMessage);
             }
 
             return new LoggerScope(this);

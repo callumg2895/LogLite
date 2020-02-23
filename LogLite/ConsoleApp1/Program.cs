@@ -20,14 +20,14 @@ namespace LogLite.Scratchpad
 
 				ILogger logger = factory.CreateLogger<Program>();
 
-				logger.Log(LogLevel.Information, "Hello, World!");
+				logger.Log(LogLevel.Information, "Starting...");
 
 				using (IDisposable scope = logger.BeginScope("new scope"))
 				{
 					logger.Log(LogLevel.Information, "Hello, World!");
 				};
 
-				logger.Log(LogLevel.Information, "Hello, World!");
+				logger.Log(LogLevel.Information, "Finishing...");
 			}
 		}
 	}
