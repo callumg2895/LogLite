@@ -9,10 +9,12 @@ namespace LogLite.Core
 	public class LogLiteLoggerProvider : ILoggerProvider
 	{
 		private ConcurrentDictionary<string, LogLiteLogger> loggers;
+		private LogLevel logLevel;
 
-		public LogLiteLoggerProvider()
+		public LogLiteLoggerProvider(LogLevel level)
 		{
 			loggers = new ConcurrentDictionary<string, LogLiteLogger>();
+			logLevel = level;
 		}
 
 		public ILogger CreateLogger(string categoryName)
@@ -22,7 +24,7 @@ namespace LogLite.Core
 				return logger;
 			}
 
-			logger = new LogLiteLogger();
+			logger = new LogLiteLogger(logLevel, categoryName);
 
 			if (loggers.TryAdd(categoryName, logger)) 
 			{

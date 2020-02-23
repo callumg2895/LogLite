@@ -36,6 +36,8 @@ namespace LogLite.Core
 
         private readonly List<string> logQueue;
         private readonly Dictionary<int, string> scopeLookup;
+        private readonly LogLevel logLevel;
+        private readonly string category;
 
         private readonly object logQueueLock;
         private readonly object scopeLookupLock;
@@ -43,21 +45,30 @@ namespace LogLite.Core
 
         private Task currentTask = null;
         
-        public LogLiteLogger()
+        public LogLiteLogger(LogLevel level, string category)
         {
-            rootDirectory = Path.GetPathRoot(Environment.SystemDirectory);
-            logFileDirectory = Path.Combine(rootDirectory, "/Logs");
+            this.rootDirectory = Path.GetPathRoot(Environment.SystemDirectory);
+            this.logFileDirectory = Path.Combine(rootDirectory, "/Logs");
 
-            logQueue = new List<string>();
-            scopeLookup = new Dictionary<int, string>();
+            this.logQueue = new List<string>();
+            this.scopeLookup = new Dictionary<int, string>();
+            this.logLevel = level;
+            this.category = category;
 
-            logQueueLock = new object();
-            scopeLookupLock = new object();
-            writeLock = new object();
+            this.logQueueLock = new object();
+            this.scopeLookupLock = new object();
+            this.writeLock = new object();
         }   
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
+            if (logLevel < this.logLevel)
+            {
+                // The log message should be suppressed if it does not meet the configured minimum level
+
+                return;
+            }
+
             string statment = formatter(state, exception);
 
             Log(statment);
@@ -78,7 +89,7 @@ namespace LogLite.Core
 
             lock (logQueueLock)
             {
-                logQueue.Add($"[{scopeMessage}] {statement}");
+                logQueue.Add($"[{category}] [{scopeMessage}] {statement}");
             }
 
             // Flush to disk asynchronously so we don't disrupt the main thread

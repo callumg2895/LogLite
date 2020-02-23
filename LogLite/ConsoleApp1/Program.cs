@@ -1,6 +1,7 @@
 ﻿using LogLite.Core;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Configuration;
 using System.Threading;
 
 namespace LogLite.Scratchpad
@@ -9,25 +10,25 @@ namespace LogLite.Scratchpad
 	{
 		static void Main(string[] args)
 		{
-			ILoggerProvider logLiteLoggerProvider = new LogLiteLoggerProvider();
-			ILoggerFactory factory = new LoggerFactory();
+			LogLevel level = (LogLevel)Enum.Parse(typeof(LogLevel), ConfigurationManager.AppSettings.Get("LogLevel"));
 
-			factory.AddProvider(logLiteLoggerProvider);
+			ILoggerProvider logLiteLoggerProvider = new LogLiteLoggerProvider(level);
 
-			ILogger logger = factory.CreateLogger("");
-
-			logger.Log(LogLevel.Information, "Hello, World!");
-
-
-			using (var scope = logger.BeginScope("new scope"))
+			using (ILoggerFactory factory = new LoggerFactory())
 			{
+				factory.AddProvider(logLiteLoggerProvider);
+
+				ILogger logger = factory.CreateLogger<Program>();
+
 				logger.Log(LogLevel.Information, "Hello, World!");
-			};
 
+				using (IDisposable scope = logger.BeginScope("new scope"))
+				{
+					logger.Log(LogLevel.Information, "Hello, World!");
+				};
 
-			logger.Log(LogLevel.Information, "Hello, World!");
-
-			factory.Dispose();
+				logger.Log(LogLevel.Information, "Hello, World!");
+			}
 		}
 	}
 }
