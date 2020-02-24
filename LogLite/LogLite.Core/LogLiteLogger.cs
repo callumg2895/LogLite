@@ -31,34 +31,30 @@ namespace LogLite.Core
             }
         }
 
-        private readonly string _rootDirectory;
-        private readonly string _logFileDirectory;
-
-        private readonly List<string> _logQueue;
+        private readonly List<ILoggerSink> _sinks;
         private readonly Dictionary<int, string> _scopeLookup;
         private readonly LogLevel _logLevel;
         private readonly string _category;
 
-        private readonly object _logQueueLock;
         private readonly object _scopeLookupLock;
-        private readonly object _writeLock;
 
         private Task currentTask = null;
         
         public LogLiteLogger(LogLevel logLevel, string category)
         {
-            _rootDirectory = Path.GetPathRoot(Environment.SystemDirectory);
-            _logFileDirectory = Path.Combine(_rootDirectory, "/Logs");
-
-            _logQueue = new List<string>();
+            _sinks = new List<ILoggerSink>();
             _scopeLookup = new Dictionary<int, string>();
             _logLevel = logLevel;
             _category = category;
 
-            _logQueueLock = new object();
             _scopeLookupLock = new object();
-            _writeLock = new object();
+
         }   
+
+        public void AddSink(ILoggerSink sink)
+        {
+            _sinks.Add(sink);
+        }
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
@@ -69,13 +65,6 @@ namespace LogLite.Core
                 return;
             }
 
-            string statment = formatter(state, exception);
-
-            Log(statment);
-        }
-
-        public void Log(string statement)
-        {
             int threadHash = Thread.CurrentThread.GetHashCode();
             string scopeMessage = string.Empty;
 
@@ -87,51 +76,19 @@ namespace LogLite.Core
                 }
             }
 
-            lock (_logQueueLock)
+            string statement = $"[{_category}] [{scopeMessage}] {formatter(state, exception)}";
+
+            currentTask = Task.Run(() =>
             {
-                _logQueue.Add($"[{_category}] [{scopeMessage}] {statement}");
-            }
+                List<Task> tasks = new List<Task>();
 
-            // Flush to disk asynchronously so we don't disrupt the main thread
-            currentTask = Task.Run(Flush);
-        }
-
-        public void Flush()
-        {
-            StringBuilder stringBuilder = new StringBuilder();
-            List<string> statements;
-            string logFilePath = Path.Combine(_logFileDirectory, "logFile.log");
-
-            lock (_logQueueLock)
-            {
-                statements = new List<string>(_logQueue);
-
-                _logQueue.Clear();
-            }
-
-
-            foreach (string item in statements)
-            {
-                stringBuilder.AppendLine(item);
-
-            }
-
-            lock (_writeLock)
-            {
-                if (!Directory.Exists(_logFileDirectory))
+                foreach (ILoggerSink sink in _sinks)
                 {
-                    Directory.CreateDirectory(_logFileDirectory);
+                    tasks.Add(Task.Run(() => { sink.Write(statement); }));
                 }
 
-                if (!File.Exists(logFilePath))
-                {
-                    File.Create(logFilePath);
-                }
-
-                using FileStream stream = File.Open(logFilePath, FileMode.Open);
-
-                stream.Write(Encoding.UTF8.GetBytes(stringBuilder.ToString()));
-            }
+                Task.WaitAll(tasks.ToArray());
+            });
         }
 
         public void Dispose()
@@ -141,9 +98,11 @@ namespace LogLite.Core
                 currentTask.Wait();
             }
 
-            Flush();
+            foreach(ILoggerSink sink in _sinks)
+            {
+                sink.Flush();
+            }
         }
-
 
         public bool IsEnabled(LogLevel logLevel)
         {
