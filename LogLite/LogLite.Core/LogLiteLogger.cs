@@ -65,18 +65,22 @@ namespace LogLite.Core
                 return;
             }
 
-            int threadHash = Thread.CurrentThread.GetHashCode();
-            string scopeMessage = string.Empty;
+            StringBuilder statement = new StringBuilder();
 
-            lock (_scopeLookupLock)
+            int threadHash = Thread.CurrentThread.GetHashCode();
+            string dateMessage = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            string scopeMessage = GetCurrentScope();
+            string stateMessage = formatter(state, exception);
+
+            statement.Append($"[{dateMessage}] ")
+                     .Append($"[{_category}] ");
+
+            if (!string.IsNullOrEmpty(scopeMessage))
             {
-                if (_scopeLookup.ContainsKey(threadHash))
-                {
-                    scopeMessage = _scopeLookup[threadHash];
-                }
+                statement.Append($"[{scopeMessage}] ");
             }
 
-            string statement = $"[{_category}] [{scopeMessage}] {formatter(state, exception)}";
+            statement.Append($" {stateMessage}");
 
             currentTask = Task.Run(() =>
             {
@@ -84,7 +88,7 @@ namespace LogLite.Core
 
                 foreach (ILoggerSink sink in _sinks)
                 {
-                    tasks.Add(Task.Run(() => { sink.Write(statement); }));
+                    tasks.Add(Task.Run(() => { sink.Write(statement.ToString()); }));
                 }
 
                 Task.WaitAll(tasks.ToArray());
@@ -120,6 +124,21 @@ namespace LogLite.Core
             }
 
             return new LoggerScope(this);
+        }
+
+        private string GetCurrentScope()
+        {
+            int threadHash = Thread.CurrentThread.GetHashCode();
+
+            lock (_scopeLookupLock)
+            {
+                if (_scopeLookup.ContainsKey(threadHash))
+                {
+                    return _scopeLookup[threadHash];
+                }
+            }
+
+            return string.Empty;
         }
     }
 }
