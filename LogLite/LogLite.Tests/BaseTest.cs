@@ -16,23 +16,35 @@ namespace LogLite.Tests
 		}
 
 		[TestMethod]
-		public void TestMethod1()
+		public void TestDisposalFlushesAllStatements()
 		{
+			int totalStatements = 10000;
+			string testStatement = "test";
+			string testScope = "test";
+
 			using (ILoggerFactory factory = new LoggerFactory()) 
 			{
 				factory.AddProvider(new LogLiteLoggerProvider(LogLevel.Trace));
 
 				ILogger logger = factory.CreateLogger<BaseTest>();
 
-				logger.LogInformation("hello");
-			}
-			
-			foreach (string s in loggerSink.Statements)
-			{
-				Console.WriteLine(s);
+				for (int i = 0; i < totalStatements; i++)
+				{
+					if (i % 2 == 0)
+					{
+						logger.LogInformation(testStatement);
+					}
+					else
+					{
+						using IDisposable scope = logger.BeginScope(testScope);
+
+						logger.LogInformation(testStatement);
+					}
+				}
 			}
 
-			Assert.AreEqual(loggerSink.Statements.Count, loggerSink.FlushedStatements.Count);
+			Assert.AreEqual(totalStatements, loggerSink.Statements.Count);
+			Assert.AreEqual(totalStatements, loggerSink.FlushedStatements.Count);
 		}
 	}
 }

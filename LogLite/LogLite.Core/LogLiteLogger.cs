@@ -14,19 +14,19 @@ namespace LogLite.Core
         private class LoggerScope : IDisposable
         {
             private readonly LogLiteLogger _logger;
+            private readonly int _threadHash;
 
             internal LoggerScope(LogLiteLogger logger)
             {
                 _logger = logger;
+                _threadHash = Thread.CurrentThread.GetHashCode();
             }
 
             public void Dispose()
             {
-                int threadHash = Thread.CurrentThread.GetHashCode();
-
                 lock (_logger._scopeLookupLock)
                 {
-                    _logger._scopeLookup.Remove(threadHash);
+                    _logger._scopeLookup.Remove(_threadHash);
                 }
             }
         }
@@ -37,8 +37,6 @@ namespace LogLite.Core
         private readonly string _category;
 
         private readonly object _scopeLookupLock;
-
-        private Task currentTask = null;
         
         public LogLiteLogger(LogLevel logLevel, string category)
         {
@@ -48,7 +46,6 @@ namespace LogLite.Core
             _category = category;
 
             _scopeLookupLock = new object();
-
         }   
 
         public void AddSink(ILoggerSink sink)
@@ -58,16 +55,14 @@ namespace LogLite.Core
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            if (logLevel < _logLevel)
-            {
-                // The log message should be suppressed if it does not meet the configured minimum level
 
+            if (!IsEnabled(logLevel))
+            {
                 return;
             }
 
             StringBuilder statement = new StringBuilder();
 
-            int threadHash = Thread.CurrentThread.GetHashCode();
             string dateMessage = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             string scopeMessage = GetCurrentScope();
             string stateMessage = formatter(state, exception);
@@ -82,26 +77,14 @@ namespace LogLite.Core
 
             statement.Append($" {stateMessage}");
 
-            currentTask = Task.Run(() =>
+            foreach (ILoggerSink sink in _sinks)
             {
-                List<Task> tasks = new List<Task>();
-
-                foreach (ILoggerSink sink in _sinks)
-                {
-                    tasks.Add(Task.Run(() => { sink.Write(statement.ToString()); }));
-                }
-
-                Task.WaitAll(tasks.ToArray());
-            });
+                sink.Write(statement.ToString());
+            }
         }
 
         public void Dispose()
         {
-            if (currentTask != null)
-            {
-                currentTask.Wait();
-            }
-
             foreach(ILoggerSink sink in _sinks)
             {
                 sink.Flush();
@@ -110,7 +93,7 @@ namespace LogLite.Core
 
         public bool IsEnabled(LogLevel logLevel)
         {
-            return true;
+            return logLevel > _logLevel;
         }
 
         public IDisposable BeginScope<TState>(TState state)
