@@ -14,20 +14,15 @@ namespace LogLite.Core
         private class LoggerScope : IDisposable
         {
             private readonly LogLiteLogger _logger;
-            private readonly int _threadHash;
 
             internal LoggerScope(LogLiteLogger logger)
             {
                 _logger = logger;
-                _threadHash = Thread.CurrentThread.GetHashCode();
             }
 
             public void Dispose()
             {
-                lock (_logger._scopeLookupLock)
-                {
-                    _logger._scopeLookup.Remove(_threadHash);
-                }
+                _logger.EndScope();
             }
         }
 
@@ -55,7 +50,6 @@ namespace LogLite.Core
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-
             if (!IsEnabled(logLevel))
             {
                 return;
@@ -98,30 +92,43 @@ namespace LogLite.Core
 
         public IDisposable BeginScope<TState>(TState state)
         {
+            if (state == null)
+            {
+                throw new NullReferenceException($"{nameof(state)} cannot be null");
+            }
+
             int threadHash = Thread.CurrentThread.GetHashCode();
-            string scopeMessage = state.ToString();
+            string? scopeMessage = state.ToString();
 
             lock (_scopeLookupLock)
             {
-                _scopeLookup.TryAdd(threadHash, scopeMessage);
+                _scopeLookup.TryAdd(threadHash, scopeMessage!);
             }
 
             return new LoggerScope(this);
         }
 
-        private string GetCurrentScope()
+        private void EndScope()
         {
             int threadHash = Thread.CurrentThread.GetHashCode();
 
             lock (_scopeLookupLock)
             {
-                if (_scopeLookup.ContainsKey(threadHash))
-                {
-                    return _scopeLookup[threadHash];
-                }
+                _scopeLookup.Remove(threadHash);
+            }
+        }
+
+        private string GetCurrentScope()
+        {
+            int threadHash = Thread.CurrentThread.GetHashCode();
+            string? scopeMessage;
+
+            lock (_scopeLookupLock)
+            {
+                _scopeLookup.TryGetValue(threadHash, out scopeMessage);
             }
 
-            return string.Empty;
+            return scopeMessage ?? string.Empty;
         }
     }
 }
