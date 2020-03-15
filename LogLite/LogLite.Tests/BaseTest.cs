@@ -12,7 +12,7 @@ namespace LogLite.Tests
 
 		static BaseTest()
 		{
-			LoggerConfiguration.AddSink(loggerSink);
+			LogLiteConfiguration.AddSink(loggerSink);
 		}
 
 		[TestMethod]

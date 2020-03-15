@@ -30,6 +30,7 @@ namespace LogLite.Core
         private readonly Dictionary<int, string> _scopeLookup;
         private readonly LogLevel _logLevel;
         private readonly string _category;
+        private readonly string _dateTimeFormat;
 
         private readonly object _scopeLookupLock;
         
@@ -39,6 +40,7 @@ namespace LogLite.Core
             _scopeLookup = new Dictionary<int, string>();
             _logLevel = logLevel;
             _category = category;
+            _dateTimeFormat = LogLiteConfiguration.DateTimeFormat;
 
             _scopeLookupLock = new object();
         }   
@@ -57,7 +59,7 @@ namespace LogLite.Core
 
             StringBuilder statement = new StringBuilder();
 
-            string dateMessage = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            string dateMessage = DateTime.Now.ToString(_dateTimeFormat);
             string scopeMessage = GetCurrentScope();
             string stateMessage = formatter(state, exception);
 

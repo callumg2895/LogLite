@@ -26,7 +26,7 @@ namespace LogLite.Core
 
 			logger = new LogLiteLogger(_logLevel, categoryName);
 
-			foreach (ILoggerSink sink in LoggerConfiguration.LoggerSinks)
+			foreach (ILoggerSink sink in LogLiteConfiguration.LoggerSinks)
 			{
 				logger.AddSink(sink);
 			}
