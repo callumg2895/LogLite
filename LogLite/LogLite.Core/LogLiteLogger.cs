@@ -26,6 +26,10 @@ namespace LogLite.Core
             }
         }
 
+        private const int FlushDelayMilliseconds = 10;
+
+        private readonly List<string> _statements;
+        private readonly List<Task> _tasks;
         private readonly List<ILoggerSink> _sinks;
         private readonly Dictionary<int, string> _scopeLookup;
         private readonly LogLevel _logLevel;
@@ -33,9 +37,12 @@ namespace LogLite.Core
         private readonly string _dateTimeFormat;
 
         private readonly object _scopeLookupLock;
+        private readonly object _statementQueueLock;
         
         public LogLiteLogger(LogLevel logLevel, string category)
         {
+            _statements = new List<string>();
+            _tasks = new List<Task>();
             _sinks = new List<ILoggerSink>();
             _scopeLookup = new Dictionary<int, string>();
             _logLevel = logLevel;
@@ -43,6 +50,7 @@ namespace LogLite.Core
             _dateTimeFormat = LogLiteConfiguration.DateTimeFormat;
 
             _scopeLookupLock = new object();
+            _statementQueueLock = new object();
         }   
 
         public void AddSink(ILoggerSink sink)
@@ -63,6 +71,8 @@ namespace LogLite.Core
             string scopeMessage = GetCurrentScope();
             string stateMessage = formatter(state, exception);
 
+            bool shouldInitiateFlush = false;
+
             statement.Append($"[{dateMessage}] ")
                      .Append($"[{_category}] ");
 
@@ -73,14 +83,26 @@ namespace LogLite.Core
 
             statement.Append($" {stateMessage}");
 
-            foreach (ILoggerSink sink in _sinks)
+            lock (_statementQueueLock)
             {
-                sink.Write(statement.ToString());
+                _statements.Add(statement.ToString());
+
+                shouldInitiateFlush = _statements.Count == 1;
+            }
+
+            if (shouldInitiateFlush)
+            {
+                FlushStatementQueue();
             }
         }
 
         public void Dispose()
         {
+            while (_tasks.Count > 0 || _statements.Count > 0)
+            {
+                Thread.Sleep(10);
+            }
+
             foreach(ILoggerSink sink in _sinks)
             {
                 sink.Flush();
@@ -131,6 +153,39 @@ namespace LogLite.Core
             }
 
             return scopeMessage ?? string.Empty;
+        }
+
+        private void FlushStatementQueue()
+        {
+            Task task = new Task(() =>
+            {
+                List<string> statements;
+
+                Thread.Sleep(FlushDelayMilliseconds);
+
+                lock (_statementQueueLock)
+                {
+                    statements = new List<string>(_statements);
+                    _statements.Clear();
+                }
+
+                foreach (ILoggerSink sink in _sinks)
+                {
+                    foreach (string statement in statements)
+                    {
+                        sink.Write(statement.ToString());
+                    }
+                }
+            });
+
+            _tasks.Add(task);
+
+            Task.Run(() =>
+            {
+                task.Start();
+                task.Wait();
+                _tasks.Remove(task);
+            });
         }
     }
 }

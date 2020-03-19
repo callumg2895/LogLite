@@ -10,38 +10,50 @@ namespace LogLite.Tests
 	{
 		private static readonly TestLoggerSink loggerSink = new TestLoggerSink();
 
+		private ILoggerFactory loggerFactory;
+
 		static BaseTest()
 		{
 			LogLiteConfiguration.AddSink(loggerSink);
 		}
 
+		[TestInitialize]
+		public void TestInitialize()
+		{
+			loggerFactory = new LoggerFactory();
+			loggerFactory.AddProvider(new LogLiteLoggerProvider(LogLevel.Trace));
+		}
+
+		[TestCleanup]
+		public void TestCleanup()
+		{
+			loggerFactory.Dispose();
+		}
+
 		[TestMethod]
-		public void TestDisposalFlushesAllStatements()
+		public void TestLoggerFactoryDisposalFlushesAllStatements()
 		{
 			int totalStatements = 10000;
 			string testStatement = "test";
 			string testScope = "test";
 
-			using (ILoggerFactory factory = new LoggerFactory()) 
+			ILogger logger = loggerFactory.CreateLogger<BaseTest>();
+
+			for (int i = 0; i < totalStatements; i++)
 			{
-				factory.AddProvider(new LogLiteLoggerProvider(LogLevel.Trace));
-
-				ILogger logger = factory.CreateLogger<BaseTest>();
-
-				for (int i = 0; i < totalStatements; i++)
+				if (i % 2 == 0)
 				{
-					if (i % 2 == 0)
-					{
-						logger.LogInformation(testStatement);
-					}
-					else
-					{
-						using IDisposable scope = logger.BeginScope(testScope);
+					logger.LogInformation(testStatement);
+				}
+				else
+				{
+					using IDisposable scope = logger.BeginScope(testScope);
 
-						logger.LogInformation(testStatement);
-					}
+					logger.LogInformation(testStatement);
 				}
 			}
+
+			loggerFactory.Dispose();
 
 			Assert.AreEqual(totalStatements, loggerSink.Statements.Count);
 			Assert.AreEqual(totalStatements, loggerSink.FlushedStatements.Count);
