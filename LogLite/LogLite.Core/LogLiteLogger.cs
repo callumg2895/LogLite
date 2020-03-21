@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using LogLite.Core.Util;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -28,8 +29,8 @@ namespace LogLite.Core
 
         private const int FlushDelayMilliseconds = 10;
 
+        private readonly RunQueue _runQueue;
         private readonly List<string> _statements;
-        private readonly List<Task> _tasks;
         private readonly List<ILoggerSink> _sinks;
         private readonly Dictionary<int, string> _scopeLookup;
         private readonly LogLevel _logLevel;
@@ -41,8 +42,8 @@ namespace LogLite.Core
         
         public LogLiteLogger(LogLevel logLevel, string category)
         {
+            _runQueue = new RunQueue();
             _statements = new List<string>();
-            _tasks = new List<Task>();
             _sinks = new List<ILoggerSink>();
             _scopeLookup = new Dictionary<int, string>();
             _logLevel = logLevel;
@@ -98,10 +99,7 @@ namespace LogLite.Core
 
         public void Dispose()
         {
-            while (_tasks.Count > 0 || _statements.Count > 0)
-            {
-                Thread.Sleep(10);
-            }
+            _runQueue.Dispose();
 
             foreach(ILoggerSink sink in _sinks)
             {
@@ -157,7 +155,7 @@ namespace LogLite.Core
 
         private void FlushStatementQueue()
         {
-            Task task = new Task(() =>
+            _runQueue.Enqueue(() =>
             {
                 List<string> statements;
 
@@ -176,15 +174,6 @@ namespace LogLite.Core
                         sink.Write(statement.ToString());
                     }
                 }
-            });
-
-            _tasks.Add(task);
-
-            Task.Run(() =>
-            {
-                task.Start();
-                task.Wait();
-                _tasks.Remove(task);
             });
         }
     }
