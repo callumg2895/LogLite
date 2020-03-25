@@ -41,6 +41,8 @@ namespace LogLite.Core.Util
 
 		public void Dispose()
 		{
+			_cancellationTokenSource.Cancel();
+
 			lock (_lock)
 			{
 				/*
@@ -50,7 +52,6 @@ namespace LogLite.Core.Util
 				Monitor.Pulse(_lock);
 			}
 
-			_cancellationTokenSource.Cancel();
 			_thread.Join();
 		}
 
