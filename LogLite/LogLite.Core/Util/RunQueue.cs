@@ -75,7 +75,13 @@ namespace LogLite.Core.Util
 					continue;
 				}
 
-				Action action = _actions.Peek();
+				Action? action = _actions.Peek();
+
+				if (action == null)
+				{
+					_actions.Dequeue();
+					continue;
+				}
 
 				action.Invoke();
 
