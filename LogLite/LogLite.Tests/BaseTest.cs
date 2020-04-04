@@ -1,4 +1,5 @@
 using LogLite.Core;
+using LogLite.Sinks.File;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -8,13 +9,15 @@ namespace LogLite.Tests
 	[TestClass]
 	public class BaseTest
 	{
-		private static readonly TestLoggerSink loggerSink = new TestLoggerSink();
+		private static readonly TestLoggerSink testLoggerSink = new TestLoggerSink();
+		private static readonly FileLoggerSink fileLoggerSink = new FileLoggerSink();
 
 		private ILoggerFactory loggerFactory;
 
 		static BaseTest()
 		{
-			LogLiteConfiguration.AddSink(loggerSink);
+			LogLiteConfiguration.AddSink(testLoggerSink);
+			LogLiteConfiguration.AddSink(fileLoggerSink);
 		}
 
 		[TestInitialize]
@@ -55,8 +58,8 @@ namespace LogLite.Tests
 
 			loggerFactory.Dispose();
 
-			Assert.AreEqual(totalStatements, loggerSink.Statements.Count);
-			Assert.AreEqual(totalStatements, loggerSink.FlushedStatements.Count);
+			Assert.AreEqual(totalStatements, testLoggerSink.Statements.Count);
+			Assert.AreEqual(totalStatements, testLoggerSink.FlushedStatements.Count);
 		}
 	}
 }

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace LogLite.Core
 {
-	public interface ILoggerSink
+	public interface ILoggerSink : IDisposable
 	{
 		public void Write(string statement);
 

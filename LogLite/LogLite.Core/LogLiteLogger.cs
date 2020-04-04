@@ -99,11 +99,12 @@ namespace LogLite.Core
 
         public void Dispose()
         {
+            FlushStatementQueue();
             _runQueue.Dispose();
 
             foreach(ILoggerSink sink in _sinks)
             {
-                sink.Flush();
+                sink.Dispose();
             }
         }
 

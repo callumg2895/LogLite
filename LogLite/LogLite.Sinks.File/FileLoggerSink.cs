@@ -1,18 +1,23 @@
 ﻿using LogLite.Core;
+using LogLite.Core.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LogLite.Sinks.File
 {
 	public class FileLoggerSink : ILoggerSink
 	{
+		private const int FlushDelayMilliseconds = 10;
+
 		private readonly string _rootDirectory;
 		private readonly string _logFileDirectory;
 
 		private readonly List<string> _logQueue;
+		private readonly RunQueue _runQueue;
 
 		private readonly object _logQueueLock;
 		private readonly object _writeLock;
@@ -23,56 +28,68 @@ namespace LogLite.Sinks.File
 			_logFileDirectory = Path.Combine(_rootDirectory, "/Logs");
 
 			_logQueue = new List<string>();
+			_runQueue = new RunQueue();
 
 			_logQueueLock = new object();
-			_writeLock = new object();
 		}
 
 		public void Write(string statement)
 		{
+			int queueLength = 0;
+
 			lock (_logQueueLock)
 			{
 				_logQueue.Add(statement);
+				queueLength = _logQueue.Count;
 			}
 
 			// Flush to disk asynchronously so we don't disrupt the main thread
-			Task.Run(Flush);
+			if (queueLength == 1)
+			{
+				Flush();
+			}	
 		}
 		public void Flush()
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			List<string> statements;
-			string logFilePath = Path.Combine(_logFileDirectory, "logFile.log");
-
-			lock (_logQueueLock)
+			_runQueue.Enqueue(() =>
 			{
-				statements = new List<string>(_logQueue);
+				Thread.Sleep(FlushDelayMilliseconds);
 
-				_logQueue.Clear();
-			}
+				string logFilePath = Path.Combine(_logFileDirectory, "logFile.log");
 
-			foreach (string item in statements)
-			{
-				stringBuilder.AppendLine(item);
-			}
+				StringBuilder stringBuilder = new StringBuilder();
+				FileInfo file = new FileInfo(logFilePath);
+				List<string> statements;
+				
+				lock (_logQueueLock)
+				{
+					statements = new List<string>(_logQueue);
 
-			lock (_writeLock)
-			{
+					_logQueue.Clear();
+				}
+
+				foreach (string item in statements)
+				{
+					stringBuilder.AppendLine(item);
+				}
+
 				if (!Directory.Exists(_logFileDirectory))
 				{
 					Directory.CreateDirectory(_logFileDirectory);
 				}
 
-				if (!System.IO.File.Exists(logFilePath))
-				{
-					System.IO.File.Create(logFilePath);
-				}
+				using FileStream stream = file.Exists
+					? file.Open(FileMode.Open)
+					: file.Create();
 
-				using FileStream stream = System.IO.File.Open(logFilePath, FileMode.Open);
-
-				stream.Write(Encoding.UTF8.GetBytes(stringBuilder.ToString()));
-			}
+				stream.Write(Encoding.UTF8.GetBytes(stringBuilder.ToString()));			
+			});
 		}
 
+		public void Dispose()
+		{
+			Flush();
+			_runQueue.Dispose();
+		}
 	}
 }

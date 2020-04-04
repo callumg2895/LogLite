@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LogLite.Core\LogLite.Core.csproj" />
+    <ProjectReference Include="..\LogLite.Sinks.File\LogLite.Sinks.File.csproj" />
   </ItemGroup>
 
 </Project>

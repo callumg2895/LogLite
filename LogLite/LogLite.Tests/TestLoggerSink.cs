@@ -29,5 +29,10 @@ namespace LogLite.Tests
 		{
 			Statements.Add(statement);
 		}
+
+		public void Dispose()
+		{
+			Flush();
+		}
 	}
 }

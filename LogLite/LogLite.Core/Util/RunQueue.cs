@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace LogLite.Core.Util
 {
-	internal class RunQueue : IDisposable
+	public class RunQueue : IDisposable
 	{
 		private readonly Queue<Action> _actions;
 		private readonly Thread _thread;
