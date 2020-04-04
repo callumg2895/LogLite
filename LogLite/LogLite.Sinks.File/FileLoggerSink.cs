@@ -67,24 +67,30 @@ namespace LogLite.Sinks.File
 				Thread.Sleep(FlushDelayMilliseconds);
 
 				StringBuilder stringBuilder = new StringBuilder();
-				List<string> statements;
-				
-				lock (_logQueueLock)
-				{
-					statements = new List<string>(_logQueue);
 
-					_logQueue.Clear();
-				}
-
-				foreach (string item in statements)
+				do
 				{
-					stringBuilder.AppendLine(item);
+					List<string> statements;
+
+					lock (_logQueueLock)
+					{
+						statements = new List<string>(_logQueue);
+
+						_logQueue.Clear();
+					}
+
+					foreach (string item in statements)
+					{
+						stringBuilder.AppendLine(item);
+					}
 				}
+				while (_logQueue.Count > 0);
 
 				FileStream fileStream = _logFile.Open(FileMode.Open);
-					
+
 				fileStream.Write(Encoding.UTF8.GetBytes(stringBuilder.ToString()));
 				fileStream.Dispose();
+
 			});
 		}
 
