@@ -18,9 +18,9 @@ namespace LogLite.Sinks.File
 
 		private readonly List<string> _logQueue;
 		private readonly RunQueue _runQueue;
+		private readonly FileInfo _logFile;
 
 		private readonly object _logQueueLock;
-		private readonly object _writeLock;
 
 		public FileLoggerSink()
 		{
@@ -31,6 +31,18 @@ namespace LogLite.Sinks.File
 			_runQueue = new RunQueue();
 
 			_logQueueLock = new object();
+
+			if (!Directory.Exists(_logFileDirectory))
+			{
+				Directory.CreateDirectory(_logFileDirectory);
+			}
+
+			_logFile = new FileInfo(Path.Combine(_logFileDirectory, "logFile.log"));
+
+			if (!_logFile.Exists)
+			{
+				_logFile.Create();
+			}
 		}
 
 		public void Write(string statement)
@@ -43,7 +55,6 @@ namespace LogLite.Sinks.File
 				queueLength = _logQueue.Count;
 			}
 
-			// Flush to disk asynchronously so we don't disrupt the main thread
 			if (queueLength == 1)
 			{
 				Flush();
@@ -55,10 +66,7 @@ namespace LogLite.Sinks.File
 			{
 				Thread.Sleep(FlushDelayMilliseconds);
 
-				string logFilePath = Path.Combine(_logFileDirectory, "logFile.log");
-
 				StringBuilder stringBuilder = new StringBuilder();
-				FileInfo file = new FileInfo(logFilePath);
 				List<string> statements;
 				
 				lock (_logQueueLock)
@@ -73,22 +81,15 @@ namespace LogLite.Sinks.File
 					stringBuilder.AppendLine(item);
 				}
 
-				if (!Directory.Exists(_logFileDirectory))
-				{
-					Directory.CreateDirectory(_logFileDirectory);
-				}
-
-				using FileStream stream = file.Exists
-					? file.Open(FileMode.Open)
-					: file.Create();
-
-				stream.Write(Encoding.UTF8.GetBytes(stringBuilder.ToString()));			
+				FileStream fileStream = _logFile.Open(FileMode.Open);
+					
+				fileStream.Write(Encoding.UTF8.GetBytes(stringBuilder.ToString()));
+				fileStream.Dispose();
 			});
 		}
 
 		public void Dispose()
 		{
-			Flush();
 			_runQueue.Dispose();
 		}
 	}

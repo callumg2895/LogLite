@@ -3,6 +3,7 @@ using LogLite.Sinks.File;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.IO;
 
 namespace LogLite.Tests
 {
@@ -31,6 +32,8 @@ namespace LogLite.Tests
 		public void TestCleanup()
 		{
 			loggerFactory.Dispose();
+			testLoggerSink.FlushedStatements.Clear();
+			testLoggerSink.Statements.Clear();
 		}
 
 		[TestMethod]
@@ -60,6 +63,45 @@ namespace LogLite.Tests
 
 			Assert.AreEqual(totalStatements, testLoggerSink.Statements.Count);
 			Assert.AreEqual(totalStatements, testLoggerSink.FlushedStatements.Count);
+		}
+
+		[TestMethod]
+		public void TestFileLoggerSinkDisposalFlushesAllStatements()
+		{
+			int totalStatements = 10000;
+			string testStatement = "test";
+			string testScope = "test";
+
+			ILogger logger = loggerFactory.CreateLogger<BaseTest>();
+
+			for (int i = 0; i < totalStatements; i++)
+			{
+				if (i % 2 == 0)
+				{
+					logger.LogInformation(testStatement);
+				}
+				else
+				{
+					using IDisposable scope = logger.BeginScope(testScope);
+
+					logger.LogInformation(testStatement);
+				}
+			}
+
+			loggerFactory.Dispose();
+
+			FileInfo file = new FileInfo(@"C:\Logs\logFile.log");
+			int actualStatements = 0;
+
+			using StreamReader streamReader = new StreamReader(file.FullName);
+
+			while (!streamReader.EndOfStream)
+			{
+				streamReader.ReadLine();
+				actualStatements++;
+			}
+
+			Assert.AreEqual(totalStatements, actualStatements);
 		}
 	}
 }
