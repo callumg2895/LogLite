@@ -17,14 +17,6 @@ namespace LogLite.Tests
 			FlushedStatements = new List<string>();
 		}
 
-		public void Flush()
-		{
-			foreach (string statement in Statements)
-			{
-				FlushedStatements.Add(statement);
-			}
-		}
-
 		public void Write(string statement)
 		{
 			Statements.Add(statement);
@@ -33,6 +25,14 @@ namespace LogLite.Tests
 		public void Dispose()
 		{
 			Flush();
+		}
+
+		private void Flush()
+		{
+			foreach (string statement in Statements)
+			{
+				FlushedStatements.Add(statement);
+			}
 		}
 	}
 }

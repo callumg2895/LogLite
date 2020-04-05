@@ -6,8 +6,8 @@ namespace LogLite.Core
 {
 	public interface ILoggerSink : IDisposable
 	{
+
 		public void Write(string statement);
 
-		public void Flush();
 	}
 }
