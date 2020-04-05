@@ -9,7 +9,7 @@ namespace LogLite.Sinks.File
 {
 	public class FileLoggerSink : ILoggerSink
 	{
-		private const int FlushIntervalMilliseconds = 100;
+		private const int FlushTimeoutMilliseconds = 1000;
 
 		private readonly string _rootDirectory;
 		private readonly string _logFileDirectory;
@@ -23,7 +23,7 @@ namespace LogLite.Sinks.File
 
 		public FileLoggerSink()
 		{
-			ThreadStart threadStart = new ThreadStart(Flush);
+			ThreadStart threadStart = new ThreadStart(ProcessQueue);
 
 			_rootDirectory = Path.GetPathRoot(Environment.SystemDirectory);
 			_logFileDirectory = Path.Combine(_rootDirectory, "/Logs");
@@ -53,10 +53,10 @@ namespace LogLite.Sinks.File
 
 		public void Write(string statement)
 		{
-			_logQueue.Enqueue(statement);
-
 			lock (_lock)
 			{
+				_logQueue.Enqueue(statement);
+
 				Monitor.Pulse(_lock);
 			}
 		}
@@ -70,47 +70,49 @@ namespace LogLite.Sinks.File
 				Monitor.Pulse(_lock);
 			}
 
-			// We need to stop the thread, but if the run queue is currently waiting it needs to be notified.
-
 			_thread.Join();
 		}
 
-		private void Flush()
+		private void ProcessQueue()
 		{
 			do
 			{
-				if (FlushIteration())
-				{
-					continue;
-				}
-
-				lock (_lock)
-				{
-					Monitor.Wait(_lock, FlushIntervalMilliseconds, FlushIteration());
-				}			
+				FlushQueue();
+				AwaitNotification();
 			}
 			while (!_cancellationTokenSource.Token.IsCancellationRequested || _logQueue.Count > 0);
 		}
 
-		private bool FlushIteration()
+		private void FlushQueue()
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			int writeCount = 0;
+			using FileStream fileStream = _logFile.Open(FileMode.Append);
+			using StreamWriter streamWriter = new StreamWriter(fileStream);
 
-			while (_logQueue.Count > 0)
+			while (true)
 			{
-				stringBuilder.AppendLine(_logQueue.Dequeue());
-				writeCount++;
+				string statement;
+
+				lock (_lock)
+				{
+					if (!_logQueue.TryDequeue(out statement))
+					{
+						break;
+					}
+				}
+
+				streamWriter.WriteLine(statement);
 			}
+		}
 
-			using (FileStream fileStream = _logFile.Open(FileMode.Open))
+		private void AwaitNotification()
+		{
+			lock (_lock)
 			{
-				fileStream.Write(Encoding.UTF8.GetBytes(stringBuilder.ToString()));
-			};
-
-			Thread.Sleep(FlushIntervalMilliseconds);
-
-			return writeCount > 0;
+				if (_logQueue.Count == 0)
+				{
+					Monitor.Wait(_lock, FlushTimeoutMilliseconds);
+				}
+			}
 		}
 	}
 }

@@ -102,7 +102,17 @@ namespace LogLite.Core
             FlushStatementQueue();
             _runQueue.Dispose();
 
-            foreach(ILoggerSink sink in _sinks)
+            List<string> statements;
+
+            Thread.Sleep(FlushDelayMilliseconds);
+
+            lock (_statementQueueLock)
+            {
+                statements = new List<string>(_statements);
+                _statements.Clear();
+            }
+
+            foreach (ILoggerSink sink in _sinks)
             {
                 sink.Dispose();
             }

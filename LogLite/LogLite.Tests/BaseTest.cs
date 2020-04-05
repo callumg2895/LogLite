@@ -68,7 +68,7 @@ namespace LogLite.Tests
 		[TestMethod]
 		public void TestFileLoggerSinkDisposalFlushesAllStatements()
 		{
-			int totalStatements = 10000;
+			int totalStatements = 100000;
 			string testStatement = "test";
 			string testScope = "test";
 
