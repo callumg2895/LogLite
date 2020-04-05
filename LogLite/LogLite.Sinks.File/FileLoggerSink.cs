@@ -86,7 +86,7 @@ namespace LogLite.Sinks.File
 
 				lock (_lock)
 				{
-					Monitor.Wait(_lock, FlushIntervalMilliseconds);
+					Monitor.Wait(_lock, FlushIntervalMilliseconds, FlushIteration());
 				}			
 			}
 			while (!_cancellationTokenSource.Token.IsCancellationRequested || _logQueue.Count > 0);
@@ -94,8 +94,6 @@ namespace LogLite.Sinks.File
 
 		private bool FlushIteration()
 		{
-			Thread.Sleep(FlushIntervalMilliseconds);
-
 			StringBuilder stringBuilder = new StringBuilder();
 			int writeCount = 0;
 
@@ -109,6 +107,8 @@ namespace LogLite.Sinks.File
 			{
 				fileStream.Write(Encoding.UTF8.GetBytes(stringBuilder.ToString()));
 			};
+
+			Thread.Sleep(FlushIntervalMilliseconds);
 
 			return writeCount > 0;
 		}
