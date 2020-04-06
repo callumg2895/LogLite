@@ -1,5 +1,6 @@
 using LogLite.Core;
-using LogLite.Sinks.File;
+using LogLite.Core.Sinks;
+using LogLite.Tests.Sinks;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -10,8 +11,8 @@ namespace LogLite.Tests
 	[TestClass]
 	public class BaseTest
 	{
-		private static readonly TestLoggerSink testLoggerSink = new TestLoggerSink();
-		private static readonly FileLoggerSink fileLoggerSink = new FileLoggerSink();
+		private static readonly TestSink testLoggerSink = new TestSink();
+		private static readonly FileSink fileLoggerSink = new FileSink();
 
 		private ILoggerFactory loggerFactory;
 

@@ -5,9 +5,7 @@ VisualStudioVersion = 16.0.29418.71
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogLite.Core", "LogLite.Core\LogLite.Core.csproj", "{8ACC1DC3-4EF5-4AAE-873C-BE46D143447E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogLite.Sinks.File", "LogLite.Sinks.File\LogLite.Sinks.File.csproj", "{8CE1C38C-878E-4D23-9216-01A09A7A66D3}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogLite.Tests", "LogLite.Tests\LogLite.Tests.csproj", "{B6999D80-7657-4C93-97C3-FE48ED973047}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogLite.Tests", "LogLite.Tests\LogLite.Tests.csproj", "{B6999D80-7657-4C93-97C3-FE48ED973047}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,10 +17,6 @@ Global
 		{8ACC1DC3-4EF5-4AAE-873C-BE46D143447E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8ACC1DC3-4EF5-4AAE-873C-BE46D143447E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8ACC1DC3-4EF5-4AAE-873C-BE46D143447E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8CE1C38C-878E-4D23-9216-01A09A7A66D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8CE1C38C-878E-4D23-9216-01A09A7A66D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8CE1C38C-878E-4D23-9216-01A09A7A66D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8CE1C38C-878E-4D23-9216-01A09A7A66D3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B6999D80-7657-4C93-97C3-FE48ED973047}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B6999D80-7657-4C93-97C3-FE48ED973047}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B6999D80-7657-4C93-97C3-FE48ED973047}.Release|Any CPU.ActiveCfg = Release|Any CPU

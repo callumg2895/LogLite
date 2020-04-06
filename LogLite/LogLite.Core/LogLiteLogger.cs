@@ -2,190 +2,187 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace LogLite.Core
 {
 	public sealed class LogLiteLogger : IDisposable, ILogger
-    {
-        private class LoggerScope : IDisposable
-        {
-            private readonly LogLiteLogger _logger;
+	{
+		private class LoggerScope : IDisposable
+		{
+			private readonly LogLiteLogger _logger;
 
-            internal LoggerScope(LogLiteLogger logger)
-            {
-                _logger = logger;
-            }
+			internal LoggerScope(LogLiteLogger logger)
+			{
+				_logger = logger;
+			}
 
-            public void Dispose()
-            {
-                _logger.EndScope();
-            }
-        }
+			public void Dispose()
+			{
+				_logger.EndScope();
+			}
+		}
 
-        private const int FlushDelayMilliseconds = 10;
+		private const int FlushDelayMilliseconds = 10;
 
-        private readonly RunQueue _runQueue;
-        private readonly List<string> _statements;
-        private readonly List<ILoggerSink> _sinks;
-        private readonly Dictionary<int, string> _scopeLookup;
-        private readonly LogLevel _logLevel;
-        private readonly string _category;
-        private readonly string _dateTimeFormat;
+		private readonly RunQueue _runQueue;
+		private readonly List<string> _statements;
+		private readonly List<ILoggerSink> _sinks;
+		private readonly Dictionary<int, string> _scopeLookup;
+		private readonly LogLevel _logLevel;
+		private readonly string _category;
+		private readonly string _dateTimeFormat;
 
-        private readonly object _scopeLookupLock;
-        private readonly object _statementQueueLock;
-        
-        public LogLiteLogger(LogLevel logLevel, string category)
-        {
-            _runQueue = new RunQueue();
-            _statements = new List<string>();
-            _sinks = new List<ILoggerSink>();
-            _scopeLookup = new Dictionary<int, string>();
-            _logLevel = logLevel;
-            _category = category;
-            _dateTimeFormat = LogLiteConfiguration.DateTimeFormat;
+		private readonly object _scopeLookupLock;
+		private readonly object _statementQueueLock;
 
-            _scopeLookupLock = new object();
-            _statementQueueLock = new object();
-        }   
+		public LogLiteLogger(LogLevel logLevel, string category)
+		{
+			_runQueue = new RunQueue();
+			_statements = new List<string>();
+			_sinks = new List<ILoggerSink>();
+			_scopeLookup = new Dictionary<int, string>();
+			_logLevel = logLevel;
+			_category = category;
+			_dateTimeFormat = LogLiteConfiguration.DateTimeFormat;
 
-        public void AddSink(ILoggerSink sink)
-        {
-            _sinks.Add(sink);
-        }
+			_scopeLookupLock = new object();
+			_statementQueueLock = new object();
+		}
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
-        {
-            if (!IsEnabled(logLevel))
-            {
-                return;
-            }
+		public void AddSink(ILoggerSink sink)
+		{
+			_sinks.Add(sink);
+		}
 
-            StringBuilder statement = new StringBuilder();
+		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+		{
+			if (!IsEnabled(logLevel))
+			{
+				return;
+			}
 
-            string dateMessage = DateTime.Now.ToString(_dateTimeFormat);
-            string scopeMessage = GetCurrentScope();
-            string stateMessage = formatter(state, exception);
+			StringBuilder statement = new StringBuilder();
 
-            bool shouldInitiateFlush = false;
+			string dateMessage = DateTime.Now.ToString(_dateTimeFormat);
+			string scopeMessage = GetCurrentScope();
+			string stateMessage = formatter(state, exception);
 
-            statement.Append($"[{dateMessage}] ")
-                     .Append($"[{_category}] ");
+			bool shouldInitiateFlush = false;
 
-            if (!string.IsNullOrEmpty(scopeMessage))
-            {
-                statement.Append($"[{scopeMessage}] ");
-            }
+			statement.Append($"[{dateMessage}] ")
+					 .Append($"[{_category}] ");
 
-            statement.Append($" {stateMessage}");
+			if (!string.IsNullOrEmpty(scopeMessage))
+			{
+				statement.Append($"[{scopeMessage}] ");
+			}
 
-            lock (_statementQueueLock)
-            {
-                _statements.Add(statement.ToString());
+			statement.Append($" {stateMessage}");
 
-                shouldInitiateFlush = _statements.Count == 1;
-            }
+			lock (_statementQueueLock)
+			{
+				_statements.Add(statement.ToString());
 
-            if (shouldInitiateFlush)
-            {
-                FlushStatementQueue();
-            }
-        }
+				shouldInitiateFlush = _statements.Count == 1;
+			}
 
-        public void Dispose()
-        {
-            FlushStatementQueue();
-            _runQueue.Dispose();
+			if (shouldInitiateFlush)
+			{
+				FlushStatementQueue();
+			}
+		}
 
-            List<string> statements;
+		public void Dispose()
+		{
+			FlushStatementQueue();
+			_runQueue.Dispose();
 
-            Thread.Sleep(FlushDelayMilliseconds);
+			List<string> statements;
 
-            lock (_statementQueueLock)
-            {
-                statements = new List<string>(_statements);
-                _statements.Clear();
-            }
+			Thread.Sleep(FlushDelayMilliseconds);
 
-            foreach (ILoggerSink sink in _sinks)
-            {
-                sink.Dispose();
-            }
-        }
+			lock (_statementQueueLock)
+			{
+				statements = new List<string>(_statements);
+				_statements.Clear();
+			}
 
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return logLevel > _logLevel;
-        }
+			foreach (ILoggerSink sink in _sinks)
+			{
+				sink.Dispose();
+			}
+		}
 
-        public IDisposable BeginScope<TState>(TState state)
-        {
-            if (state == null)
-            {
-                throw new NullReferenceException($"{nameof(state)} cannot be null");
-            }
+		public bool IsEnabled(LogLevel logLevel)
+		{
+			return logLevel > _logLevel;
+		}
 
-            int threadHash = Thread.CurrentThread.GetHashCode();
-            string? scopeMessage = state.ToString();
+		public IDisposable BeginScope<TState>(TState state)
+		{
+			if (state == null)
+			{
+				throw new NullReferenceException($"{nameof(state)} cannot be null");
+			}
 
-            lock (_scopeLookupLock)
-            {
-                _scopeLookup.TryAdd(threadHash, scopeMessage!);
-            }
+			int threadHash = Thread.CurrentThread.GetHashCode();
+			string? scopeMessage = state.ToString();
 
-            return new LoggerScope(this);
-        }
+			lock (_scopeLookupLock)
+			{
+				_scopeLookup.TryAdd(threadHash, scopeMessage!);
+			}
 
-        private void EndScope()
-        {
-            int threadHash = Thread.CurrentThread.GetHashCode();
+			return new LoggerScope(this);
+		}
 
-            lock (_scopeLookupLock)
-            {
-                _scopeLookup.Remove(threadHash);
-            }
-        }
+		private void EndScope()
+		{
+			int threadHash = Thread.CurrentThread.GetHashCode();
 
-        private string GetCurrentScope()
-        {
-            int threadHash = Thread.CurrentThread.GetHashCode();
-            string? scopeMessage;
+			lock (_scopeLookupLock)
+			{
+				_scopeLookup.Remove(threadHash);
+			}
+		}
 
-            lock (_scopeLookupLock)
-            {
-                _scopeLookup.TryGetValue(threadHash, out scopeMessage);
-            }
+		private string GetCurrentScope()
+		{
+			int threadHash = Thread.CurrentThread.GetHashCode();
+			string? scopeMessage;
 
-            return scopeMessage ?? string.Empty;
-        }
+			lock (_scopeLookupLock)
+			{
+				_scopeLookup.TryGetValue(threadHash, out scopeMessage);
+			}
 
-        private void FlushStatementQueue()
-        {
-            _runQueue.Enqueue(() =>
-            {
-                List<string> statements;
+			return scopeMessage ?? string.Empty;
+		}
 
-                Thread.Sleep(FlushDelayMilliseconds);
+		private void FlushStatementQueue()
+		{
+			_runQueue.Enqueue(() =>
+			{
+				List<string> statements;
 
-                lock (_statementQueueLock)
-                {
-                    statements = new List<string>(_statements);
-                    _statements.Clear();
-                }
+				Thread.Sleep(FlushDelayMilliseconds);
 
-                foreach (ILoggerSink sink in _sinks)
-                {
-                    foreach (string statement in statements)
-                    {
-                        sink.Write(statement.ToString());
-                    }
-                }
-            });
-        }
-    }
+				lock (_statementQueueLock)
+				{
+					statements = new List<string>(_statements);
+					_statements.Clear();
+				}
+
+				foreach (ILoggerSink sink in _sinks)
+				{
+					foreach (string statement in statements)
+					{
+						sink.Write(statement.ToString());
+					}
+				}
+			});
+		}
+	}
 }

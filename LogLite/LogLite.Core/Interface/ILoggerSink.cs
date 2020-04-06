@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace LogLite.Core
+namespace LogLite.Core.Interface
 {
 	public interface ILoggerSink : IDisposable
 	{

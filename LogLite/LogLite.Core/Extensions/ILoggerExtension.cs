@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace LogLite.Core.Extensions
 {
@@ -34,7 +32,7 @@ namespace LogLite.Core.Extensions
 			Exception exception = null;
 
 
-			logger.Log(logLevel, eventId, message, exception, (message, exception) => { return message; } );
+			logger.Log(logLevel, eventId, message, exception, (message, exception) => { return message; });
 		}
 
 		public static void Warning(this ILogger logger, string message)

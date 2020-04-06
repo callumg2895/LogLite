@@ -1,17 +1,15 @@
-﻿using LogLite.Core;
-using System;
+﻿using LogLite.Core.Interface;
 using System.Collections.Generic;
-using System.Text;
 
-namespace LogLite.Tests
+namespace LogLite.Tests.Sinks
 {
-	public class TestLoggerSink : ILoggerSink
+	public class TestSink : ILoggerSink
 	{
 		public List<string> Statements { get; set; }
 
 		public List<string> FlushedStatements { get; set; }
 
-		public TestLoggerSink()
+		public TestSink()
 		{
 			Statements = new List<string>();
 			FlushedStatements = new List<string>();

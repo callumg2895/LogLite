@@ -1,7 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using LogLite.Core.Interface;
 using System.Collections.Generic;
-using System.Text;
 
 namespace LogLite.Core
 {

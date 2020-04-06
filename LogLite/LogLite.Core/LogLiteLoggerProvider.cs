@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Text;
 
 namespace LogLite.Core
 {
@@ -31,7 +29,7 @@ namespace LogLite.Core
 				logger.AddSink(sink);
 			}
 
-			if (_loggers.TryAdd(categoryName, logger)) 
+			if (_loggers.TryAdd(categoryName, logger))
 			{
 				return logger;
 			}
