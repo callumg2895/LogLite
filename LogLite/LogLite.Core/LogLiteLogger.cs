@@ -1,4 +1,5 @@
-﻿using LogLite.Core.Util;
+﻿using LogLite.Core.Interface;
+using LogLite.Core.Util;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;

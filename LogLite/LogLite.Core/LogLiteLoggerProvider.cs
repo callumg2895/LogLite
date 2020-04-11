@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using LogLite.Core.Interface;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 
