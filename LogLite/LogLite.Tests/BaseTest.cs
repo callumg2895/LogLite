@@ -11,20 +11,20 @@ namespace LogLite.Tests
 	[TestClass]
 	public class BaseTest
 	{
-		private static readonly TestSink testLoggerSink = new TestSink();
-		private static readonly FileSink fileLoggerSink = new FileSink();
+		protected static TestSink testLoggerSink;
+		protected static FileSink fileLoggerSink;
 
-		private ILoggerFactory loggerFactory;
-
-		static BaseTest()
-		{
-			LogLiteConfiguration.AddSink(testLoggerSink);
-			LogLiteConfiguration.AddSink(fileLoggerSink);
-		}
+		protected ILoggerFactory loggerFactory;
 
 		[TestInitialize]
 		public void TestInitialize()
 		{
+			testLoggerSink = new TestSink();
+			fileLoggerSink = new FileSink();
+
+			LogLiteConfiguration.AddSink(testLoggerSink);
+			LogLiteConfiguration.AddSink(fileLoggerSink);
+
 			loggerFactory = new LoggerFactory();
 			loggerFactory.AddProvider(new LogLiteLoggerProvider(LogLevel.Trace));
 		}
@@ -33,76 +33,11 @@ namespace LogLite.Tests
 		public void TestCleanup()
 		{
 			loggerFactory.Dispose();
+
 			testLoggerSink.FlushedStatements.Clear();
 			testLoggerSink.Statements.Clear();
 		}
 
-		[TestMethod]
-		public void TestLoggerFactoryDisposalFlushesAllStatements()
-		{
-			int totalStatements = 10000;
-			string testStatement = "test";
-			string testScope = "test";
 
-			ILogger logger = loggerFactory.CreateLogger<BaseTest>();
-
-			for (int i = 0; i < totalStatements; i++)
-			{
-				if (i % 2 == 0)
-				{
-					logger.LogInformation(testStatement);
-				}
-				else
-				{
-					using IDisposable scope = logger.BeginScope(testScope);
-
-					logger.LogInformation(testStatement);
-				}
-			}
-
-			loggerFactory.Dispose();
-
-			Assert.AreEqual(totalStatements, testLoggerSink.Statements.Count);
-			Assert.AreEqual(totalStatements, testLoggerSink.FlushedStatements.Count);
-		}
-
-		[TestMethod]
-		public void TestFileLoggerSinkDisposalFlushesAllStatements()
-		{
-			int totalStatements = 100000;
-			string testStatement = "test";
-			string testScope = "test";
-
-			ILogger logger = loggerFactory.CreateLogger<BaseTest>();
-
-			for (int i = 0; i < totalStatements; i++)
-			{
-				if (i % 2 == 0)
-				{
-					logger.LogInformation(testStatement);
-				}
-				else
-				{
-					using IDisposable scope = logger.BeginScope(testScope);
-
-					logger.LogInformation(testStatement);
-				}
-			}
-
-			loggerFactory.Dispose();
-
-			FileInfo file = new FileInfo(@"C:\Logs\logFile.log");
-			int actualStatements = 0;
-
-			using StreamReader streamReader = new StreamReader(file.FullName);
-
-			while (!streamReader.EndOfStream)
-			{
-				streamReader.ReadLine();
-				actualStatements++;
-			}
-
-			Assert.AreEqual(totalStatements, actualStatements);
-		}
 	}
 }
