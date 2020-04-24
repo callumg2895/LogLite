@@ -14,7 +14,7 @@ namespace LogLite.Tests
 		protected static TestSink testLoggerSink;
 		protected static FileSink fileLoggerSink;
 
-		protected ILoggerFactory loggerFactory;
+		protected static ILoggerFactory loggerFactory;
 
 		[TestInitialize]
 		public void TestInitialize()

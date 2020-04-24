@@ -1,4 +1,5 @@
 ﻿using LogLite.Core.Interface;
+using System;
 using System.Collections.Generic;
 
 namespace LogLite.Core
@@ -7,14 +8,22 @@ namespace LogLite.Core
 	{
 		private const string DefaultDateTimeFormat = "dd-MM-yyyy HH:mm:ss fff";
 
+		private static readonly Func<string, Exception, string> DefaultLogFormatter = (string message, Exception exception) =>
+		{
+			return message;
+		};
+
 		internal static List<ILoggerSink> LoggerSinks { get; set; }
 
 		internal static string DateTimeFormat { get; set; }
+
+		internal static Func<string, Exception, string> LogFormatter { get; set; }
 
 		static LogLiteConfiguration()
 		{
 			LoggerSinks = new List<ILoggerSink>();
 			DateTimeFormat = DefaultDateTimeFormat;
+			LogFormatter = DefaultLogFormatter;
 		}
 
 		public static void AddSink(ILoggerSink sink)
@@ -25,6 +34,11 @@ namespace LogLite.Core
 		public static void SetDateTimeFormat(string format)
 		{
 			DateTimeFormat = format;
+		}
+
+		public static void SetLogFormatter(Func<string, Exception, string> formatter)
+		{
+
 		}
 	}
 }
