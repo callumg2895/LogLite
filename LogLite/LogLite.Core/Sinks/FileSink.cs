@@ -6,15 +6,13 @@ using System.Threading;
 
 namespace LogLite.Core.Sinks
 {
-	public class FileSink : ILoggerSink
+	public class FileSink : Sink
 	{
 		private const int FlushTimeoutMilliseconds = 1000;
 
 		private readonly string _rootDirectory;
 		private readonly string _logFileDirectory;
 
-		private readonly CancellationTokenSource _cancellationTokenSource;
-		private readonly Queue<string> _logQueue;
 		private readonly Thread _thread;
 		private readonly FileInfo _logFile;
 
@@ -26,9 +24,6 @@ namespace LogLite.Core.Sinks
 
 			_rootDirectory = Path.GetPathRoot(Environment.SystemDirectory)!;
 			_logFileDirectory = Path.Combine(_rootDirectory, "/Logs");
-
-			_cancellationTokenSource = new CancellationTokenSource();
-			_logQueue = new Queue<string>();
 			_thread = new Thread(threadStart);
 
 			_lock = new object();
@@ -50,7 +45,7 @@ namespace LogLite.Core.Sinks
 			_thread.Start();
 		}
 
-		public void Write(string statement)
+		public override void Write(string statement)
 		{
 			lock (_lock)
 			{
@@ -60,7 +55,7 @@ namespace LogLite.Core.Sinks
 			}
 		}
 
-		public void Dispose()
+		public override void Dispose()
 		{
 			_cancellationTokenSource.Cancel();
 
