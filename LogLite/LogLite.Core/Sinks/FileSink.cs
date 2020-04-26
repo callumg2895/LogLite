@@ -8,25 +8,15 @@ namespace LogLite.Core.Sinks
 {
 	public class FileSink : Sink
 	{
-		private const int FlushTimeoutMilliseconds = 1000;
-
 		private readonly string _rootDirectory;
 		private readonly string _logFileDirectory;
 
-		private readonly Thread _thread;
 		private readonly FileInfo _logFile;
-
-		private readonly object _lock;
 
 		public FileSink()
 		{
-			ThreadStart threadStart = new ThreadStart(ProcessQueue);
-
 			_rootDirectory = Path.GetPathRoot(Environment.SystemDirectory)!;
 			_logFileDirectory = Path.Combine(_rootDirectory, "/Logs");
-			_thread = new Thread(threadStart);
-
-			_lock = new object();
 
 			if (!Directory.Exists(_logFileDirectory))
 			{
@@ -41,8 +31,6 @@ namespace LogLite.Core.Sinks
 			}
 
 			using FileStream fileStream = _logFile.Create();
-
-			_thread.Start();
 		}
 
 		public override void Write(string statement)
@@ -51,34 +39,23 @@ namespace LogLite.Core.Sinks
 			{
 				_logQueue.Enqueue(statement);
 
-				Monitor.Pulse(_lock);
+				if (_logQueue.Count == 1)
+				{
+					_runQueue.Enqueue(Flush);
+				}
 			}
 		}
 
 		public override void Dispose()
 		{
-			_cancellationTokenSource.Cancel();
-
-			lock (_lock)
-			{
-				Monitor.Pulse(_lock);
-			}
-
-			_thread.Join();
+			_runQueue.Enqueue(Flush);
+			_runQueue.Dispose();
 		}
 
-		private void ProcessQueue()
+		protected override void Flush()
 		{
-			do
-			{
-				FlushQueue();
-				AwaitNotification();
-			}
-			while (!_cancellationTokenSource.Token.IsCancellationRequested || _logQueue.Count > 0);
-		}
+			Thread.Sleep(FlushTimeoutMilliseconds);
 
-		private void FlushQueue()
-		{
 			using FileStream fileStream = _logFile.Open(FileMode.Append);
 			using StreamWriter streamWriter = new StreamWriter(fileStream);
 
@@ -95,17 +72,6 @@ namespace LogLite.Core.Sinks
 				}
 
 				streamWriter.WriteLine(statement);
-			}
-		}
-
-		private void AwaitNotification()
-		{
-			lock (_lock)
-			{
-				if (_logQueue.Count == 0)
-				{
-					Monitor.Wait(_lock, FlushTimeoutMilliseconds);
-				}
 			}
 		}
 	}

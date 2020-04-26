@@ -23,5 +23,10 @@ namespace LogLite.Core.Sinks
 		{
 			throw new NotImplementedException();
 		}
+
+		protected override void Flush()
+		{
+			throw new NotImplementedException();
+		}
 	}
 }
