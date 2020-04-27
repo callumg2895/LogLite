@@ -13,6 +13,7 @@ namespace LogLite.Tests
 	{
 		protected static TestSink testLoggerSink;
 		protected static FileSink fileLoggerSink;
+		protected static EventLogSink eventLoggerSink;
 
 		protected static ILoggerFactory loggerFactory;
 
@@ -21,9 +22,11 @@ namespace LogLite.Tests
 		{
 			testLoggerSink = new TestSink();
 			fileLoggerSink = new FileSink();
+			eventLoggerSink = new EventLogSink();
 
 			LogLiteConfiguration.AddSink(testLoggerSink);
 			LogLiteConfiguration.AddSink(fileLoggerSink);
+			LogLiteConfiguration.AddSink(eventLoggerSink);
 
 			loggerFactory = new LoggerFactory();
 			loggerFactory.AddProvider(new LogLiteLoggerProvider(LogLevel.Trace));
