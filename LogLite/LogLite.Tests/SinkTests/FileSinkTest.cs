@@ -14,7 +14,7 @@ namespace LogLite.Tests.SinkTests
 		[DoNotParallelize]
 		public void TestFileLoggerSinkDisposalFlushesAllStatements()
 		{
-			int totalStatements = 100000;
+			int totalStatements = 100;
 			string testStatement = "test";
 			string testScope = "test";
 

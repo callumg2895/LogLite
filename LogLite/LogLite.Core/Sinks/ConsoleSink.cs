@@ -1,24 +1,12 @@
-﻿using LogLite.Core.Interface;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using System.Diagnostics;
 
 namespace LogLite.Core.Sinks
 {
-	public class EventLogSink : Sink
+	public class ConsoleSink : Sink
 	{
-		private EventLog _eventLog;
-
-		public EventLogSink()
-			: base()
-		{
-			_eventLog = new EventLog();
-
-			_eventLog.Source = "LogLite";
-		}
-
 		protected override void Flush()
 		{
 			Thread.Sleep(FlushTimeoutMilliseconds);
@@ -35,7 +23,7 @@ namespace LogLite.Core.Sinks
 					}
 				}
 
-				_eventLog.WriteEntry(statement);
+				Console.WriteLine(statement);
 			}
 		}
 	}

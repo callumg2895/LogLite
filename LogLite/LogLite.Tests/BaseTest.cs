@@ -14,6 +14,7 @@ namespace LogLite.Tests
 		protected static TestSink testLoggerSink;
 		protected static FileSink fileLoggerSink;
 		protected static EventLogSink eventLoggerSink;
+		protected static ConsoleSink consoleLoggerSink;
 
 		protected static ILoggerFactory loggerFactory;
 
@@ -23,10 +24,12 @@ namespace LogLite.Tests
 			testLoggerSink = new TestSink();
 			fileLoggerSink = new FileSink();
 			eventLoggerSink = new EventLogSink();
+			consoleLoggerSink = new ConsoleSink();
 
 			LogLiteConfiguration.AddSink(testLoggerSink);
 			LogLiteConfiguration.AddSink(fileLoggerSink);
 			LogLiteConfiguration.AddSink(eventLoggerSink);
+			LogLiteConfiguration.AddSink(consoleLoggerSink);
 
 			loggerFactory = new LoggerFactory();
 			loggerFactory.AddProvider(new LogLiteLoggerProvider(LogLevel.Trace));
@@ -40,7 +43,5 @@ namespace LogLite.Tests
 			testLoggerSink.FlushedStatements.Clear();
 			testLoggerSink.Statements.Clear();
 		}
-
-
 	}
 }

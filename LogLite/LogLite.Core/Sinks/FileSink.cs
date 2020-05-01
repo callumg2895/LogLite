@@ -33,25 +33,6 @@ namespace LogLite.Core.Sinks
 			using FileStream fileStream = _logFile.Create();
 		}
 
-		public override void Write(string statement)
-		{
-			lock (_lock)
-			{
-				_logQueue.Enqueue(statement);
-
-				if (_logQueue.Count == 1)
-				{
-					_runQueue.Enqueue(Flush);
-				}
-			}
-		}
-
-		public override void Dispose()
-		{
-			_runQueue.Enqueue(Flush);
-			_runQueue.Dispose();
-		}
-
 		protected override void Flush()
 		{
 			Thread.Sleep(FlushTimeoutMilliseconds);
