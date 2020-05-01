@@ -13,7 +13,7 @@ namespace LogLite.Tests
 		[DoNotParallelize]
 		public void TestLoggerFactoryDisposalFlushesAllStatements()
 		{
-			int totalStatements = 10000;
+			int totalStatements = 100;
 			string testStatement = "test";
 			string testScope = "test";
 

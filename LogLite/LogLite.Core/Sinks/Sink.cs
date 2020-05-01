@@ -26,9 +26,24 @@ namespace LogLite.Core.Sinks
 			_lock = new object();
 		}
 
-		public abstract void Dispose();
+		public virtual void Dispose()
+		{
+			_runQueue.Enqueue(Flush);
+			_runQueue.Dispose();
+		}
 
-		public abstract void Write(string statement);
+		public virtual void Write(string statement)
+		{
+			lock (_lock)
+			{
+				_logQueue.Enqueue(statement);
+
+				if (_logQueue.Count == 1)
+				{
+					_runQueue.Enqueue(Flush);
+				}
+			}
+		}
 
 		protected abstract void Flush();
 	}
