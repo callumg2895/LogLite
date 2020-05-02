@@ -8,16 +8,23 @@ namespace LogLite.Core.Sinks
 {
 	public class FileSink : Sink
 	{
-		private readonly string _rootDirectory;
-
-		private string? _logFileDirectory;
+		private DirectoryInfo? _logFileDirectory;
 		private FileInfo? _logFile;
+
+		/*
+		 * All operations performed on the file must be locked. Some of these operations will
+		 * delete the file. If this were to occur during a flush, the file stream would have 
+		 * nowhere to write to, which would probably result in a horrible exception.
+		 */
+
+		private object _fileLock = new object();
 
 		public FileSink()
 		{
-			_rootDirectory = Path.GetPathRoot(Environment.SystemDirectory)!;
+			string rootDirectory = Path.GetPathRoot(Environment.SystemDirectory)!;
+			string logFileDirectory = Path.Combine(rootDirectory, "/logs");
 
-			ConfigureDirectoryName("/logs");
+			ConfigureDirectoryName(logFileDirectory);
 			ConfigureFileName("logFile");
 		}
 
@@ -25,11 +32,14 @@ namespace LogLite.Core.Sinks
 
 		public FileSink ConfigureDirectoryName(string directoryName)
 		{
-			_logFileDirectory = Path.Combine(_rootDirectory, directoryName);
-
-			if (!Directory.Exists(_logFileDirectory))
+			lock (_fileLock)
 			{
-				Directory.CreateDirectory(_logFileDirectory);
+				if (!Directory.Exists(directoryName))
+				{
+					Directory.CreateDirectory(directoryName);
+				}
+
+				_logFileDirectory = new DirectoryInfo(directoryName);
 			}
 
 			return this;
@@ -37,19 +47,22 @@ namespace LogLite.Core.Sinks
 
 		public FileSink ConfigureFileName(string fileName)
 		{
-			if (_logFile != null && _logFile.Exists)
+			lock (_fileLock)
 			{
-				_logFile.Delete();
+				if (_logFile != null && _logFile.Exists)
+				{
+					_logFile.Delete();
+				}
+
+				_logFile = new FileInfo(Path.Combine(_logFileDirectory!.FullName, $"{fileName}.log"));
+
+				if (_logFile.Exists)
+				{
+					_logFile.Delete();
+				}
+
+				using FileStream fileStream = _logFile.Create();
 			}
-
-			_logFile = new FileInfo(Path.Combine(_logFileDirectory!, $"{fileName}.log"));
-
-			if (_logFile.Exists)
-			{
-				_logFile.Delete();
-			}
-
-			using FileStream fileStream = _logFile.Create();
 
 			return this;
 		}
@@ -57,24 +70,27 @@ namespace LogLite.Core.Sinks
 		#endregion
 		protected override void Flush()
 		{
-			Thread.Sleep(FlushTimeoutMilliseconds);
-
-			using FileStream fileStream = _logFile.Open(FileMode.Append);
-			using StreamWriter streamWriter = new StreamWriter(fileStream);
-
-			while (true)
+			lock (_fileLock)
 			{
-				string? statement;
+				Thread.Sleep(FlushTimeoutMilliseconds);
 
-				lock (_lock)
+				using FileStream fileStream = _logFile!.Open(FileMode.Append);
+				using StreamWriter streamWriter = new StreamWriter(fileStream);
+
+				while (true)
 				{
-					if (!_logQueue.TryDequeue(out statement))
-					{
-						break;
-					}
-				}
+					string? statement;
 
-				streamWriter.WriteLine(statement);
+					lock (_lock)
+					{
+						if (!_logQueue.TryDequeue(out statement))
+						{
+							break;
+						}
+					}
+
+					streamWriter.WriteLine(statement);
+				}
 			}
 		}
 	}

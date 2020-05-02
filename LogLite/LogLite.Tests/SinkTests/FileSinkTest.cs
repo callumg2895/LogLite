@@ -12,7 +12,7 @@ namespace LogLite.Tests.SinkTests
 	[TestClass]
 	public class FileSinkTest : BaseTest
 	{
-		private static readonly string logDirectoryName = "/LogLiteTesting";
+		private static readonly string logDirectoryName = @"C:\LogLiteTesting";
 		private static readonly string logFileName = $"testing_{DateTime.Now.ToString("yyyyMMdd")}";
 
 		protected static FileSink fileLoggerSink;
@@ -64,7 +64,7 @@ namespace LogLite.Tests.SinkTests
 
 			loggerFactory.Dispose();
 
-			FileInfo file = new FileInfo(@$"C:{logDirectoryName}\{logFileName}.log");
+			FileInfo file = new FileInfo(@$"{logDirectoryName}\{logFileName}.log");
 			int actualStatements = 0;
 
 			using StreamReader streamReader = new StreamReader(file.FullName);
