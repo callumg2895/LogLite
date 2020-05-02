@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using LogLite.Core;
+using LogLite.Core.Sinks;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -10,6 +12,32 @@ namespace LogLite.Tests.SinkTests
 	[TestClass]
 	public class FileSinkTest : BaseTest
 	{
+		private static readonly string logDirectoryName = "/LogLiteTesting";
+		private static readonly string logFileName = $"testing_{DateTime.Now.ToString("yyyyMMdd")}";
+
+		protected static FileSink fileLoggerSink;
+
+		[TestInitialize]
+		public void TestInitialize()
+		{
+			fileLoggerSink = new FileSink()
+				.ConfigureDirectoryName(logDirectoryName)
+				.ConfigureFileName(logFileName);
+
+			LogLiteConfiguration.AddSink(fileLoggerSink);
+
+			loggerFactory = new LoggerFactory();
+			loggerFactory.AddProvider(new LogLiteLoggerProvider(LogLevel.Trace));
+		}
+
+		[TestCleanup]
+		public void TestCleanup()
+		{
+			LogLiteConfiguration.RemoveSink(fileLoggerSink);
+
+			loggerFactory.Dispose();
+		}
+
 		[TestMethod]
 		[DoNotParallelize]
 		public void TestFileLoggerSinkDisposalFlushesAllStatements()
@@ -36,7 +64,7 @@ namespace LogLite.Tests.SinkTests
 
 			loggerFactory.Dispose();
 
-			FileInfo file = new FileInfo(@"C:\Logs\logFile.log");
+			FileInfo file = new FileInfo(@$"C:{logDirectoryName}\{logFileName}.log");
 			int actualStatements = 0;
 
 			using StreamReader streamReader = new StreamReader(file.FullName);

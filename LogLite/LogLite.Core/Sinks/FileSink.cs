@@ -9,21 +9,40 @@ namespace LogLite.Core.Sinks
 	public class FileSink : Sink
 	{
 		private readonly string _rootDirectory;
-		private readonly string _logFileDirectory;
 
-		private readonly FileInfo _logFile;
+		private string? _logFileDirectory;
+		private FileInfo? _logFile;
 
 		public FileSink()
 		{
 			_rootDirectory = Path.GetPathRoot(Environment.SystemDirectory)!;
-			_logFileDirectory = Path.Combine(_rootDirectory, "/Logs");
+
+			ConfigureDirectoryName("/logs");
+			ConfigureFileName("logFile");
+		}
+
+		#region Configuration
+
+		public FileSink ConfigureDirectoryName(string directoryName)
+		{
+			_logFileDirectory = Path.Combine(_rootDirectory, directoryName);
 
 			if (!Directory.Exists(_logFileDirectory))
 			{
 				Directory.CreateDirectory(_logFileDirectory);
 			}
 
-			_logFile = new FileInfo(Path.Combine(_logFileDirectory, "logFile.log"));
+			return this;
+		}
+
+		public FileSink ConfigureFileName(string fileName)
+		{
+			if (_logFile != null && _logFile.Exists)
+			{
+				_logFile.Delete();
+			}
+
+			_logFile = new FileInfo(Path.Combine(_logFileDirectory!, $"{fileName}.log"));
 
 			if (_logFile.Exists)
 			{
@@ -31,8 +50,11 @@ namespace LogLite.Core.Sinks
 			}
 
 			using FileStream fileStream = _logFile.Create();
+
+			return this;
 		}
 
+		#endregion
 		protected override void Flush()
 		{
 			Thread.Sleep(FlushTimeoutMilliseconds);

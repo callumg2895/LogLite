@@ -29,7 +29,6 @@ namespace LogLite.Core
 
 		private readonly RunQueue _runQueue;
 		private readonly List<string> _statements;
-		private readonly List<ILoggerSink> _sinks;
 		private readonly Dictionary<int, string> _scopeLookup;
 		private readonly LogLevel _logLevel;
 		private readonly string _category;
@@ -42,7 +41,6 @@ namespace LogLite.Core
 		{
 			_runQueue = new RunQueue();
 			_statements = new List<string>();
-			_sinks = new List<ILoggerSink>();
 			_scopeLookup = new Dictionary<int, string>();
 			_logLevel = logLevel;
 			_category = category;
@@ -50,11 +48,6 @@ namespace LogLite.Core
 
 			_scopeLookupLock = new object();
 			_statementQueueLock = new object();
-		}
-
-		public void AddSink(ILoggerSink sink)
-		{
-			_sinks.Add(sink);
 		}
 
 		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
@@ -110,7 +103,7 @@ namespace LogLite.Core
 				_statements.Clear();
 			}
 
-			foreach (ILoggerSink sink in _sinks)
+			foreach (ILoggerSink sink in LogLiteConfiguration.LoggerSinks)
 			{
 				sink.Dispose();
 			}
@@ -176,7 +169,7 @@ namespace LogLite.Core
 					_statements.Clear();
 				}
 
-				foreach (ILoggerSink sink in _sinks)
+				foreach (ILoggerSink sink in LogLiteConfiguration.LoggerSinks)
 				{
 					foreach (string statement in statements)
 					{

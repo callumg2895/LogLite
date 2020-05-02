@@ -31,6 +31,11 @@ namespace LogLite.Core
 			LoggerSinks.Add(sink);
 		}
 
+		public static void RemoveSink(ILoggerSink sink)
+		{
+			LoggerSinks.Remove(sink);
+		}
+
 		public static void SetDateTimeFormat(string format)
 		{
 			DateTimeFormat = format;

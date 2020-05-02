@@ -11,37 +11,18 @@ namespace LogLite.Tests
 	[TestClass]
 	public class BaseTest
 	{
-		protected static TestSink testLoggerSink;
-		protected static FileSink fileLoggerSink;
-		protected static EventLogSink eventLoggerSink;
-		protected static ConsoleSink consoleLoggerSink;
-
 		protected static ILoggerFactory loggerFactory;
 
-		[TestInitialize]
-		public void TestInitialize()
+		[AssemblyInitialize]
+		public static void AssemblyInitialize(TestContext context)
 		{
-			testLoggerSink = new TestSink();
-			fileLoggerSink = new FileSink();
-			eventLoggerSink = new EventLogSink();
-			consoleLoggerSink = new ConsoleSink();
 
-			LogLiteConfiguration.AddSink(testLoggerSink);
-			LogLiteConfiguration.AddSink(fileLoggerSink);
-			LogLiteConfiguration.AddSink(eventLoggerSink);
-			LogLiteConfiguration.AddSink(consoleLoggerSink);
-
-			loggerFactory = new LoggerFactory();
-			loggerFactory.AddProvider(new LogLiteLoggerProvider(LogLevel.Trace));
 		}
 
-		[TestCleanup]
-		public void TestCleanup()
+		[AssemblyCleanup]
+		public static void AssemblyCleanup()
 		{
-			loggerFactory.Dispose();
 
-			testLoggerSink.FlushedStatements.Clear();
-			testLoggerSink.Statements.Clear();
 		}
 	}
 }
