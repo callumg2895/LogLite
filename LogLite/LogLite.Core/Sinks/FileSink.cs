@@ -8,51 +8,89 @@ namespace LogLite.Core.Sinks
 {
 	public class FileSink : Sink
 	{
-		private readonly string _rootDirectory;
-		private readonly string _logFileDirectory;
+		private DirectoryInfo? _logFileDirectory;
+		private FileInfo? _logFile;
 
-		private readonly FileInfo _logFile;
+		/*
+		 * All operations performed on the file must be locked. Some of these operations will
+		 * delete the file. If this were to occur during a flush, the file stream would have 
+		 * nowhere to write to, which would probably result in a horrible exception.
+		 */
+
+		private object _fileLock = new object();
 
 		public FileSink()
 		{
-			_rootDirectory = Path.GetPathRoot(Environment.SystemDirectory)!;
-			_logFileDirectory = Path.Combine(_rootDirectory, "/Logs");
+			string rootDirectory = Path.GetPathRoot(Environment.SystemDirectory)!;
+			string logFileDirectory = Path.Combine(rootDirectory, "/logs");
 
-			if (!Directory.Exists(_logFileDirectory))
-			{
-				Directory.CreateDirectory(_logFileDirectory);
-			}
-
-			_logFile = new FileInfo(Path.Combine(_logFileDirectory, "logFile.log"));
-
-			if (_logFile.Exists)
-			{
-				_logFile.Delete();
-			}
-
-			using FileStream fileStream = _logFile.Create();
+			ConfigureDirectoryName(logFileDirectory);
+			ConfigureFileName("logFile");
 		}
 
-		protected override void Flush()
+		#region Configuration
+
+		public FileSink ConfigureDirectoryName(string directoryName)
 		{
-			Thread.Sleep(FlushTimeoutMilliseconds);
-
-			using FileStream fileStream = _logFile.Open(FileMode.Append);
-			using StreamWriter streamWriter = new StreamWriter(fileStream);
-
-			while (true)
+			lock (_fileLock)
 			{
-				string? statement;
-
-				lock (_lock)
+				if (!Directory.Exists(directoryName))
 				{
-					if (!_logQueue.TryDequeue(out statement))
-					{
-						break;
-					}
+					Directory.CreateDirectory(directoryName);
 				}
 
-				streamWriter.WriteLine(statement);
+				_logFileDirectory = new DirectoryInfo(directoryName);
+			}
+
+			return this;
+		}
+
+		public FileSink ConfigureFileName(string fileName)
+		{
+			lock (_fileLock)
+			{
+				if (_logFile != null && _logFile.Exists)
+				{
+					_logFile.Delete();
+				}
+
+				_logFile = new FileInfo(Path.Combine(_logFileDirectory!.FullName, $"{fileName}.log"));
+
+				if (_logFile.Exists)
+				{
+					_logFile.Delete();
+				}
+
+				using FileStream fileStream = _logFile.Create();
+			}
+
+			return this;
+		}
+
+		#endregion
+		protected override void Flush()
+		{
+			lock (_fileLock)
+			{
+				Thread.Sleep(FlushTimeoutMilliseconds);
+
+				using FileStream fileStream = _logFile!.Open(FileMode.Append);
+				using StreamWriter streamWriter = new StreamWriter(fileStream);
+
+				while (true)
+				{
+					string? statement;
+
+					lock (_lock)
+					{
+						if (!_logQueue.TryDequeue(out statement))
+						{
+							break;
+						}
+					}
+
+					streamWriter.WriteLine(statement);
+				}
 			}
 		}
 	}

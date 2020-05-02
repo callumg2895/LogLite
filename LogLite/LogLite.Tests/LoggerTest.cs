@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using LogLite.Core;
+using LogLite.Core.Extensions;
+using LogLite.Tests.Sinks;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -9,6 +12,28 @@ namespace LogLite.Tests
 	[TestClass]
 	public class LoggerTest : BaseTest
 	{
+		private static TestSink testLoggerSink;
+
+		[TestInitialize]
+		public void TestInitialize()
+		{
+			testLoggerSink = new TestSink();
+
+			LogLiteConfiguration.AddSink(testLoggerSink);
+
+			loggerFactory = new LoggerFactory();
+			loggerFactory.AddProvider(new LogLiteLoggerProvider(LogLevel.Trace));
+		}
+
+		[TestCleanup]
+		public void TestCleanup()
+		{
+			testLoggerSink.FlushedStatements.Clear();
+			testLoggerSink.Statements.Clear();
+
+			LogLiteConfiguration.RemoveSink(testLoggerSink);
+		}
+
 		[TestMethod]
 		[DoNotParallelize]
 		public void TestLoggerFactoryDisposalFlushesAllStatements()
@@ -23,13 +48,13 @@ namespace LogLite.Tests
 			{
 				if (i % 2 == 0)
 				{
-					logger.LogInformation(testStatement);
+					logger.Information(testStatement);
 				}
 				else
 				{
 					using IDisposable scope = logger.BeginScope(testScope);
 
-					logger.LogInformation(testStatement);
+					logger.Information(testStatement);
 				}
 			}
 
