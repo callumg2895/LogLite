@@ -65,8 +65,10 @@ namespace LogLite.Core
 
 			bool shouldInitiateFlush = false;
 
-			statement.Append($"[{dateMessage}] ")
-					 .Append($"[{_category}] ");
+			statement
+				.Append($"[{dateMessage}] ")
+				.Append($"[{_category}] ")
+				.Append($"[{logLevel}] ");
 
 			if (!string.IsNullOrEmpty(scopeMessage))
 			{

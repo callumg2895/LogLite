@@ -1,4 +1,5 @@
 ﻿using LogLite.Core;
+using LogLite.Core.Extensions;
 using LogLite.Core.Sinks;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -52,13 +53,13 @@ namespace LogLite.Tests.SinkTests
 			{
 				if (i % 2 == 0)
 				{
-					logger.LogInformation(testStatement);
+					logger.Information(testStatement);
 				}
 				else
 				{
 					using IDisposable scope = logger.BeginScope(testScope);
 
-					logger.LogInformation(testStatement);
+					logger.Information(testStatement);
 				}
 			}
 
