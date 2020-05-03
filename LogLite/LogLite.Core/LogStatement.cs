@@ -7,7 +7,8 @@ namespace LogLite.Core
 {
 	public class LogStatement
 	{
-		private LogLevel _logLevel;
+		public LogLevel LogLevel;
+
 		private EventId _eventId;
 		private string _state;
 		private string _scope;
@@ -20,7 +21,8 @@ namespace LogLite.Core
 			string category,
 			string scope)
 		{
-			_logLevel = logLevel;
+			LogLevel = logLevel;
+
 			_eventId = eventId;
 			_state = state;
 			_category = category;
@@ -38,7 +40,7 @@ namespace LogLite.Core
 				.Append($"[{dateMessage}] ")
 				.Append($"[{_category}] ")
 				.Append($"[{_eventId}] ")
-				.Append($"[{_logLevel}] ");
+				.Append($"[{LogLevel}] ");
 
 			if (!string.IsNullOrEmpty(scopeMessage))
 			{
