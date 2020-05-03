@@ -79,7 +79,7 @@ namespace LogLite.Core.Sinks
 
 				while (true)
 				{
-					string? statement;
+					LogStatement? statement;
 
 					lock (_lock)
 					{
@@ -89,7 +89,7 @@ namespace LogLite.Core.Sinks
 						}
 					}
 
-					streamWriter.WriteLine(statement);
+					streamWriter.WriteLine(statement.ToString());
 				}
 			}
 		}

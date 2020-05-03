@@ -13,7 +13,7 @@ namespace LogLite.Core.Sinks
 
 			while (true)
 			{
-				string? statement;
+				LogStatement? statement;
 
 				lock (_lock)
 				{
@@ -23,7 +23,7 @@ namespace LogLite.Core.Sinks
 					}
 				}
 
-				Console.WriteLine(statement);
+				Console.WriteLine(statement.ToString());
 			}
 		}
 	}

@@ -1,4 +1,5 @@
-﻿using LogLite.Core.Interface;
+﻿using LogLite.Core;
+using LogLite.Core.Interface;
 using System.Collections.Generic;
 
 namespace LogLite.Tests.Sinks
@@ -15,9 +16,9 @@ namespace LogLite.Tests.Sinks
 			FlushedStatements = new List<string>();
 		}
 
-		public void Write(string statement)
+		public void Write(LogStatement statement)
 		{
-			Statements.Add(statement);
+			Statements.Add(statement.ToString());
 		}
 
 		public void Dispose()

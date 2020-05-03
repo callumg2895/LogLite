@@ -25,7 +25,7 @@ namespace LogLite.Core.Sinks
 
 			while (true)
 			{
-				string? statement;
+				LogStatement? statement;
 
 				lock (_lock)
 				{
@@ -35,7 +35,7 @@ namespace LogLite.Core.Sinks
 					}
 				}
 
-				_eventLog.WriteEntry(statement);
+				_eventLog.WriteEntry(statement.ToString());
 			}
 		}
 	}

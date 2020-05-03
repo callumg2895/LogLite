@@ -28,11 +28,10 @@ namespace LogLite.Core
 		private const int FlushDelayMilliseconds = 10;
 
 		private readonly RunQueue _runQueue;
-		private readonly List<string> _statements;
+		private readonly List<LogStatement> _statements;
 		private readonly Dictionary<int, string> _scopeLookup;
 		private readonly LogLevel _logLevel;
 		private readonly string _category;
-		private readonly string _dateTimeFormat;
 
 		private readonly object _scopeLookupLock;
 		private readonly object _statementQueueLock;
@@ -40,11 +39,10 @@ namespace LogLite.Core
 		public LogLiteLogger(LogLevel logLevel, string category)
 		{
 			_runQueue = new RunQueue();
-			_statements = new List<string>();
+			_statements = new List<LogStatement>();
 			_scopeLookup = new Dictionary<int, string>();
 			_logLevel = logLevel;
 			_category = category;
-			_dateTimeFormat = LogLiteConfiguration.DateTimeFormat;
 
 			_scopeLookupLock = new object();
 			_statementQueueLock = new object();
@@ -57,29 +55,17 @@ namespace LogLite.Core
 				return;
 			}
 
-			StringBuilder statement = new StringBuilder();
-
-			string dateMessage = DateTime.Now.ToString(_dateTimeFormat);
-			string scopeMessage = GetCurrentScope();
-			string stateMessage = formatter(state, exception);
-
 			bool shouldInitiateFlush = false;
-
-			statement
-				.Append($"[{dateMessage}] ")
-				.Append($"[{_category}] ")
-				.Append($"[{logLevel}] ");
-
-			if (!string.IsNullOrEmpty(scopeMessage))
-			{
-				statement.Append($"[{scopeMessage}] ");
-			}
-
-			statement.Append($" {stateMessage}");
 
 			lock (_statementQueueLock)
 			{
-				_statements.Add(statement.ToString());
+				_statements.Add(new LogStatement(
+					logLevel: logLevel,
+					eventId: eventId,
+					state: formatter(state, exception),
+					category: _category,
+					scope: GetCurrentScope()
+					)); ;
 
 				shouldInitiateFlush = _statements.Count == 1;
 			}
@@ -95,13 +81,13 @@ namespace LogLite.Core
 			FlushStatementQueue();
 			_runQueue.Dispose();
 
-			List<string> statements;
+			List<LogStatement> statements;
 
 			Thread.Sleep(FlushDelayMilliseconds);
 
 			lock (_statementQueueLock)
 			{
-				statements = new List<string>(_statements);
+				statements = new List<LogStatement>(_statements);
 				_statements.Clear();
 			}
 
@@ -161,21 +147,21 @@ namespace LogLite.Core
 		{
 			_runQueue.Enqueue(() =>
 			{
-				List<string> statements;
+				List<LogStatement> statements;
 
 				Thread.Sleep(FlushDelayMilliseconds);
 
 				lock (_statementQueueLock)
 				{
-					statements = new List<string>(_statements);
+					statements = new List<LogStatement>(_statements);
 					_statements.Clear();
 				}
 
 				foreach (ILoggerSink sink in LogLiteConfiguration.LoggerSinks)
 				{
-					foreach (string statement in statements)
+					foreach (LogStatement statement in statements)
 					{
-						sink.Write(statement.ToString());
+						sink.Write(statement);
 					}
 				}
 			});

@@ -12,7 +12,7 @@ namespace LogLite.Core.Sinks
 		protected const int FlushTimeoutMilliseconds = 1000;
 
 		protected readonly CancellationTokenSource _cancellationTokenSource;
-		protected readonly Queue<string> _logQueue;
+		protected readonly Queue<LogStatement> _logQueue;
 		protected readonly RunQueue _runQueue;
 
 		protected readonly object _lock;
@@ -20,7 +20,7 @@ namespace LogLite.Core.Sinks
 		public Sink()
 		{
 			_cancellationTokenSource = new CancellationTokenSource();
-			_logQueue = new Queue<string>();
+			_logQueue = new Queue<LogStatement>();
 			_runQueue = new RunQueue();
 
 			_lock = new object();
@@ -32,7 +32,7 @@ namespace LogLite.Core.Sinks
 			_runQueue.Dispose();
 		}
 
-		public virtual void Write(string statement)
+		public virtual void Write(LogStatement statement)
 		{
 			lock (_lock)
 			{
