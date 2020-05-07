@@ -11,7 +11,13 @@ namespace LogLite.Core.Sinks
 		private Dictionary<LogLevel, ConsoleColor> _logLevelColors;
 
 		public ConsoleSink()
-			: base()
+			: this(null)
+		{
+
+		}
+
+		public ConsoleSink(LogLevel? filter)
+			: base(filter)
 		{
 			_logLevelColors = new Dictionary<LogLevel, ConsoleColor>()
 			{
@@ -19,8 +25,8 @@ namespace LogLite.Core.Sinks
 				{   LogLevel.Debug,         ConsoleColor.White  },
 				{   LogLevel.Information,   ConsoleColor.Green  },
 				{   LogLevel.Warning,       ConsoleColor.Yellow },
-				{   LogLevel.Error,         ConsoleColor.Red	},
-				{   LogLevel.Critical,      ConsoleColor.Red	},
+				{   LogLevel.Error,         ConsoleColor.Red    },
+				{   LogLevel.Critical,      ConsoleColor.Red    },
 			};
 		}
 

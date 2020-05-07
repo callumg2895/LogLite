@@ -1,5 +1,6 @@
 ﻿using LogLite.Core.Interface;
 using LogLite.Core.Util;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -14,16 +15,19 @@ namespace LogLite.Core.Sinks
 		protected readonly CancellationTokenSource _cancellationTokenSource;
 		protected readonly Queue<LogStatement> _logQueue;
 		protected readonly RunQueue _runQueue;
+		protected readonly LogLevel _logLevel;
 
 		protected readonly object _lock;
 
-		public Sink()
+		public Sink(LogLevel? filter)
 		{
 			_cancellationTokenSource = new CancellationTokenSource();
 			_logQueue = new Queue<LogStatement>();
 			_runQueue = new RunQueue();
 
 			_lock = new object();
+
+			_logLevel = filter ?? LogLevel.Trace;
 		}
 
 		public virtual void Dispose()
@@ -34,6 +38,11 @@ namespace LogLite.Core.Sinks
 
 		public virtual void Write(LogStatement statement)
 		{
+			if (statement.LogLevel < _logLevel)
+			{
+				return;
+			}
+
 			lock (_lock)
 			{
 				_logQueue.Enqueue(statement);

@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
+using System.Data.Common;
 
 namespace LogLite.Core.Sinks
 {
@@ -12,11 +14,29 @@ namespace LogLite.Core.Sinks
 		private EventLog _eventLog;
 
 		public EventLogSink()
-			: base()
+			: this(null, null)
+		{
+
+		}
+
+		public EventLogSink(LogLevel? filter)
+			: this(null, filter)
+		{
+
+		}
+
+		public EventLogSink(string? source)
+			: this(source, null)
+		{
+
+		}
+
+		public EventLogSink(string? source, LogLevel? filter)
+			: base(filter)
 		{
 			_eventLog = new EventLog();
 
-			_eventLog.Source = "LogLite";
+			_eventLog.Source =  source ?? "LogLite";
 		}
 
 		protected override void Flush()

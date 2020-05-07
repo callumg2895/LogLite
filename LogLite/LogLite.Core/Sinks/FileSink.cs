@@ -1,4 +1,5 @@
 ﻿using LogLite.Core.Interface;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,6 +21,13 @@ namespace LogLite.Core.Sinks
 		private object _fileLock = new object();
 
 		public FileSink()
+			: this(null)
+		{
+
+		}
+
+		public FileSink(LogLevel? filter)
+			: base(filter)
 		{
 			string rootDirectory = Path.GetPathRoot(Environment.SystemDirectory)!;
 			string logFileDirectory = Path.Combine(rootDirectory, "/logs");
