@@ -37,6 +37,8 @@ namespace LogLite.Core.Sinks
 			_eventLog = new EventLog();
 
 			_eventLog.Source =  source ?? "LogLite";
+
+			_eventLog.Clear();
 		}
 
 		protected override void Flush()
