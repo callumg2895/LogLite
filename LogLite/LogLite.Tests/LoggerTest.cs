@@ -48,13 +48,13 @@ namespace LogLite.Tests
 			{
 				if (i % 2 == 0)
 				{
-					logger.Information(testStatement);
+					logger.Trace(testStatement);
 				}
 				else
 				{
 					using IDisposable scope = logger.BeginScope(testScope);
 
-					logger.Information(testStatement);
+					logger.Trace(testStatement);
 				}
 			}
 
