@@ -99,7 +99,7 @@ namespace LogLite.Core
 
 		public bool IsEnabled(LogLevel logLevel)
 		{
-			return logLevel > _logLevel;
+			return logLevel >= _logLevel;
 		}
 
 		public IDisposable BeginScope<TState>(TState state)
