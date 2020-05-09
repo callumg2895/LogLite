@@ -53,7 +53,7 @@ namespace LogLite.Tests.SinkTests
 			logGenerator.GenerateLogStatements(100);
 			loggerFactory.Dispose();
 
-			FileInfo file = new FileInfo(@$"{logDirectoryName}\{logFileName}.log");
+			FileInfo file = new FileInfo(@$"{_logDirectoryName}\{_logFileName}.log");
 			int actualStatements = 0;
 
 			using StreamReader streamReader = new StreamReader(file.FullName);
