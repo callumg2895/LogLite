@@ -12,23 +12,23 @@ namespace LogLite.Tests
 	[TestClass]
 	public class LoggerTest : BaseTest
 	{
-		private static TestSink testLoggerSink;
+		private TestSink _testLoggerSink;
 
 		[TestInitialize]
 		public void TestInitialize()
 		{
-			testLoggerSink = new TestSink();
+			_testLoggerSink = new TestSink();
 
-			LogLiteConfiguration.AddSink(testLoggerSink);
+			LogLiteConfiguration.AddSink(_testLoggerSink);
 		}
 
 		[TestCleanup]
 		public void TestCleanup()
 		{
-			testLoggerSink.FlushedStatements.Clear();
-			testLoggerSink.Statements.Clear();
+			_testLoggerSink.FlushedStatements.Clear();
+			_testLoggerSink.Statements.Clear();
 
-			LogLiteConfiguration.RemoveSink(testLoggerSink);
+			LogLiteConfiguration.RemoveSink(_testLoggerSink);
 		}
 
 		[TestMethod]
@@ -41,15 +41,17 @@ namespace LogLite.Tests
 		[DataRow(LogLevel.Critical)]
 		public void TestLoggerFactoryDisposalFlushesAllStatements(LogLevel logLevel)
 		{
-			loggerFactory = new LoggerFactory();
+			ILoggerFactory loggerFactory = new LoggerFactory();
+
 			loggerFactory.AddProvider(new LogLiteLoggerProvider(logLevel));
-			logGenerator = new LogGenerator(loggerFactory.CreateLogger<BaseTest>(), logLevel);
+
+			LogGenerator logGenerator = new LogGenerator(loggerFactory.CreateLogger<BaseTest>(), logLevel);
 
 			logGenerator.GenerateLogStatements(100);
 			loggerFactory.Dispose();
 
-			Assert.AreEqual(logGenerator.ExpectedStatements, testLoggerSink.Statements.Count);
-			Assert.AreEqual(logGenerator.ExpectedStatements, testLoggerSink.FlushedStatements.Count);
+			Assert.AreEqual(logGenerator.ExpectedStatements, _testLoggerSink.Statements.Count);
+			Assert.AreEqual(logGenerator.ExpectedStatements, _testLoggerSink.FlushedStatements.Count);
 		}
 	}
 }

@@ -98,9 +98,6 @@ namespace LogLite.Tests
 			}
 		}
 
-		protected static ILoggerFactory loggerFactory;
-		protected static LogGenerator logGenerator;
-
 		[AssemblyInitialize]
 		public static void AssemblyInitialize(TestContext context)
 		{

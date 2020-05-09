@@ -13,8 +13,8 @@ namespace LogLite.Tests.SinkTests
 	[TestClass]
 	public class FileSinkTest : BaseTest
 	{
-		private static readonly string logDirectoryName = @"C:\LogLiteTesting";
-		private static readonly string logFileName = $"testing_{DateTime.Now.ToString("yyyyMMdd")}";
+		private readonly string _logDirectoryName = @"C:\LogLiteTesting";
+		private readonly string _logFileName = $"testing_{DateTime.Now.ToString("yyyyMMdd")}";
 
 		protected static FileSink fileLoggerSink;
 
@@ -22,8 +22,8 @@ namespace LogLite.Tests.SinkTests
 		public void TestInitialize()
 		{
 			fileLoggerSink = new FileSink()
-				.ConfigureDirectoryName(logDirectoryName)
-				.ConfigureFileName(logFileName);
+				.ConfigureDirectoryName(_logDirectoryName)
+				.ConfigureFileName(_logFileName);
 
 			LogLiteConfiguration.AddSink(fileLoggerSink);
 		}
@@ -44,9 +44,11 @@ namespace LogLite.Tests.SinkTests
 		[DataRow(LogLevel.Critical)]
 		public void TestFileLoggerSinkDisposalFlushesAllStatements(LogLevel logLevel)
 		{
-			loggerFactory = new LoggerFactory();
+			ILoggerFactory loggerFactory = new LoggerFactory();
+
 			loggerFactory.AddProvider(new LogLiteLoggerProvider(logLevel));
-			logGenerator = new LogGenerator(loggerFactory.CreateLogger<BaseTest>(), logLevel);
+
+			LogGenerator logGenerator = new LogGenerator(loggerFactory.CreateLogger<BaseTest>(), logLevel);
 
 			logGenerator.GenerateLogStatements(100);
 			loggerFactory.Dispose();

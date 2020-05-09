@@ -13,10 +13,10 @@ namespace LogLite.Tests.SinkTests
 	[TestClass]
 	public class EventLogSinkTest : BaseTest
 	{
-		private static readonly string _eventLogSource = "LogLiteTesting";
+		private readonly string _eventLogSource = "LogLiteTesting";
 
-		protected static EventLogSink _eventLogSink;
-		protected static EventLog _eventLog;
+		private EventLogSink _eventLogSink;
+		private EventLog _eventLog;
 
 		[TestInitialize]
 		public void TestInitialize()
@@ -27,17 +27,12 @@ namespace LogLite.Tests.SinkTests
 			_eventLog.Source = _eventLogSource;
 
 			LogLiteConfiguration.AddSink(_eventLogSink);
-
-			loggerFactory = new LoggerFactory();
-			loggerFactory.AddProvider(new LogLiteLoggerProvider(LogLevel.Trace));
 		}
 
 		[TestCleanup]
 		public void TestCleanup()
 		{
 			LogLiteConfiguration.RemoveSink(_eventLogSink);
-
-			loggerFactory.Dispose();
 		}
 
 		[TestMethod]
@@ -50,9 +45,11 @@ namespace LogLite.Tests.SinkTests
 		[DataRow(LogLevel.Critical)]
 		public void TestFileLoggerSinkDisposalFlushesAllStatements(LogLevel logLevel)
 		{
-			loggerFactory = new LoggerFactory();
+			ILoggerFactory loggerFactory = new LoggerFactory();
+
 			loggerFactory.AddProvider(new LogLiteLoggerProvider(logLevel));
-			logGenerator = new LogGenerator(loggerFactory.CreateLogger<BaseTest>(), logLevel);
+
+			LogGenerator logGenerator = new LogGenerator(loggerFactory.CreateLogger<BaseTest>(), logLevel);
 
 			logGenerator.GenerateLogStatements(100);
 			loggerFactory.Dispose();

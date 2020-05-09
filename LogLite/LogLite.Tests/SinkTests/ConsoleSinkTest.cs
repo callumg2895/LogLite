@@ -68,8 +68,8 @@ namespace LogLite.Tests.SinkTests
 			}
 		}
 
-		private static ConsoleSink _consoleSink;
-		private static TextWriter _textWriter;
+		private ConsoleSink _consoleSink;
+		private TextWriter _textWriter;
 
 		[TestInitialize]
 		public void TestInitialize()
@@ -99,11 +99,12 @@ namespace LogLite.Tests.SinkTests
 		public void TestConsoleLoggerSinkDisposalFlushesAllStatements(LogLevel logLevel)
 		{
 			OutputCapture writer = new OutputCapture();
+			ILoggerFactory loggerFactory = new LoggerFactory();
 
-			loggerFactory = new LoggerFactory();
 			loggerFactory.AddProvider(new LogLiteLoggerProvider(logLevel));
-			logGenerator = new LogGenerator(loggerFactory.CreateLogger<BaseTest>(), logLevel);
 
+			LogGenerator logGenerator = new LogGenerator(loggerFactory.CreateLogger<BaseTest>(), logLevel);
+			
 			Console.SetOut(writer);
 
 			logGenerator.GenerateLogStatements(100);
