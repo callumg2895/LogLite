@@ -78,10 +78,6 @@ namespace LogLite.Tests.SinkTests
 			_textWriter = Console.Out;
 
 			LogLiteConfiguration.AddSink(_consoleSink);
-
-			loggerFactory = new LoggerFactory();
-			loggerFactory.AddProvider(new LogLiteLoggerProvider(LogLevel.Trace));
-
 			Console.SetOut(_textWriter);
 		}
 
@@ -89,43 +85,31 @@ namespace LogLite.Tests.SinkTests
 		public void TestCleanup()
 		{
 			LogLiteConfiguration.RemoveSink(_consoleSink);
-
-			loggerFactory.Dispose();
-
 			Console.SetOut(_textWriter);
 		}
 
 		[TestMethod]
 		[DoNotParallelize]
-		public void TestConsoleLoggerSinkDisposalFlushesAllStatements()
+		[DataRow(LogLevel.Trace)]
+		[DataRow(LogLevel.Debug)]
+		[DataRow(LogLevel.Information)]
+		[DataRow(LogLevel.Warning)]
+		[DataRow(LogLevel.Error)]
+		[DataRow(LogLevel.Critical)]
+		public void TestConsoleLoggerSinkDisposalFlushesAllStatements(LogLevel logLevel)
 		{
-			int totalStatements = 100;
-			string testStatement = "test";
-			string testScope = "test";
+			OutputCapture writer = new OutputCapture();
 
-			using OutputCapture writer = new OutputCapture();
+			loggerFactory = new LoggerFactory();
+			loggerFactory.AddProvider(new LogLiteLoggerProvider(logLevel));
+			logGenerator = new LogGenerator(loggerFactory.CreateLogger<BaseTest>(), logLevel);
 
 			Console.SetOut(writer);
 
-			ILogger logger = loggerFactory.CreateLogger<BaseTest>();
-
-			for (int i = 0; i < totalStatements; i++)
-			{
-				if (i % 2 == 0)
-				{
-					logger.Information(testStatement);
-				}
-				else
-				{
-					using IDisposable scope = logger.BeginScope(testScope);
-
-					logger.Information(testStatement);
-				}
-			}
-
+			logGenerator.GenerateLogStatements(100);
 			loggerFactory.Dispose();
 
-			Assert.AreEqual(totalStatements, writer.CapturedOutput.Count);		
+			Assert.AreEqual(logGenerator.ExpectedStatements, writer.CapturedOutput.Count);		
 		}
 	}
 }

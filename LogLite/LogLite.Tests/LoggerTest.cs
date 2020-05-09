@@ -20,9 +20,6 @@ namespace LogLite.Tests
 			testLoggerSink = new TestSink();
 
 			LogLiteConfiguration.AddSink(testLoggerSink);
-
-			loggerFactory = new LoggerFactory();
-			loggerFactory.AddProvider(new LogLiteLoggerProvider(LogLevel.Trace));
 		}
 
 		[TestCleanup]
@@ -36,32 +33,23 @@ namespace LogLite.Tests
 
 		[TestMethod]
 		[DoNotParallelize]
-		public void TestLoggerFactoryDisposalFlushesAllStatements()
+		[DataRow(LogLevel.Trace)]
+		[DataRow(LogLevel.Debug)]
+		[DataRow(LogLevel.Information)]
+		[DataRow(LogLevel.Warning)]
+		[DataRow(LogLevel.Error)]
+		[DataRow(LogLevel.Critical)]
+		public void TestLoggerFactoryDisposalFlushesAllStatements(LogLevel logLevel)
 		{
-			int totalStatements = 100;
-			string testStatement = "test";
-			string testScope = "test";
+			loggerFactory = new LoggerFactory();
+			loggerFactory.AddProvider(new LogLiteLoggerProvider(logLevel));
+			logGenerator = new LogGenerator(loggerFactory.CreateLogger<BaseTest>(), logLevel);
 
-			ILogger logger = loggerFactory.CreateLogger<BaseTest>();
-
-			for (int i = 0; i < totalStatements; i++)
-			{
-				if (i % 2 == 0)
-				{
-					logger.Trace(testStatement);
-				}
-				else
-				{
-					using IDisposable scope = logger.BeginScope(testScope);
-
-					logger.Trace(testStatement);
-				}
-			}
-
+			logGenerator.GenerateLogStatements(100);
 			loggerFactory.Dispose();
 
-			Assert.AreEqual(totalStatements, testLoggerSink.Statements.Count);
-			Assert.AreEqual(totalStatements, testLoggerSink.FlushedStatements.Count);
+			Assert.AreEqual(logGenerator.ExpectedStatements, testLoggerSink.Statements.Count);
+			Assert.AreEqual(logGenerator.ExpectedStatements, testLoggerSink.FlushedStatements.Count);
 		}
 	}
 }

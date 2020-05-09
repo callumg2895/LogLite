@@ -26,43 +26,29 @@ namespace LogLite.Tests.SinkTests
 				.ConfigureFileName(logFileName);
 
 			LogLiteConfiguration.AddSink(fileLoggerSink);
-
-			loggerFactory = new LoggerFactory();
-			loggerFactory.AddProvider(new LogLiteLoggerProvider(LogLevel.Trace));
 		}
 
 		[TestCleanup]
 		public void TestCleanup()
 		{
 			LogLiteConfiguration.RemoveSink(fileLoggerSink);
-
-			loggerFactory.Dispose();
 		}
 
 		[TestMethod]
 		[DoNotParallelize]
-		public void TestFileLoggerSinkDisposalFlushesAllStatements()
+		[DataRow(LogLevel.Trace)]
+		[DataRow(LogLevel.Debug)]
+		[DataRow(LogLevel.Information)]
+		[DataRow(LogLevel.Warning)]
+		[DataRow(LogLevel.Error)]
+		[DataRow(LogLevel.Critical)]
+		public void TestFileLoggerSinkDisposalFlushesAllStatements(LogLevel logLevel)
 		{
-			int totalStatements = 100;
-			string testStatement = "test";
-			string testScope = "test";
+			loggerFactory = new LoggerFactory();
+			loggerFactory.AddProvider(new LogLiteLoggerProvider(logLevel));
+			logGenerator = new LogGenerator(loggerFactory.CreateLogger<BaseTest>(), logLevel);
 
-			ILogger logger = loggerFactory.CreateLogger<BaseTest>();
-
-			for (int i = 0; i < totalStatements; i++)
-			{
-				if (i % 2 == 0)
-				{
-					logger.Information(testStatement);
-				}
-				else
-				{
-					using IDisposable scope = logger.BeginScope(testScope);
-
-					logger.Information(testStatement);
-				}
-			}
-
+			logGenerator.GenerateLogStatements(100);
 			loggerFactory.Dispose();
 
 			FileInfo file = new FileInfo(@$"{logDirectoryName}\{logFileName}.log");
@@ -76,7 +62,7 @@ namespace LogLite.Tests.SinkTests
 				actualStatements++;
 			}
 
-			Assert.AreEqual(totalStatements, actualStatements);
+			Assert.AreEqual(logGenerator.ExpectedStatements, actualStatements);
 		}
 	}
 }

@@ -42,31 +42,22 @@ namespace LogLite.Tests.SinkTests
 
 		[TestMethod]
 		[DoNotParallelize]
-		public void TestFileLoggerSinkDisposalFlushesAllStatements()
+		[DataRow(LogLevel.Trace)]
+		[DataRow(LogLevel.Debug)]
+		[DataRow(LogLevel.Information)]
+		[DataRow(LogLevel.Warning)]
+		[DataRow(LogLevel.Error)]
+		[DataRow(LogLevel.Critical)]
+		public void TestFileLoggerSinkDisposalFlushesAllStatements(LogLevel logLevel)
 		{
-			int totalStatements = 100;
-			string testStatement = "test";
-			string testScope = "test";
+			loggerFactory = new LoggerFactory();
+			loggerFactory.AddProvider(new LogLiteLoggerProvider(logLevel));
+			logGenerator = new LogGenerator(loggerFactory.CreateLogger<BaseTest>(), logLevel);
 
-			ILogger logger = loggerFactory.CreateLogger<BaseTest>();
-
-			for (int i = 0; i < totalStatements; i++)
-			{
-				if (i % 2 == 0)
-				{
-					logger.Information(testStatement);
-				}
-				else
-				{
-					using IDisposable scope = logger.BeginScope(testScope);
-
-					logger.Information(testStatement);
-				}
-			}
-
+			logGenerator.GenerateLogStatements(100);
 			loggerFactory.Dispose();
 
-			Assert.AreEqual(totalStatements, _eventLog.Entries.Count);
+			Assert.AreEqual(logGenerator.ExpectedStatements, _eventLog.Entries.Count);
 		}
 	}
 }
