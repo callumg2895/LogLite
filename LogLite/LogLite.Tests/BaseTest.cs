@@ -19,10 +19,50 @@ namespace LogLite.Tests
 		/// </summary>
 		protected class LogGenerator
 		{
+			private class LogGenerationRules
+			{
+				private const int MaxRuleIndex = 4;
+
+				private int _ruleIndex = 0;
+
+				public LogGenerationRules()
+				{
+					GenerateScope = false;
+					GenerateException = false;
+				}
+
+				public bool GenerateScope;
+				public bool GenerateException;
+
+				public void UpdateRule()
+				{
+					switch (++_ruleIndex % MaxRuleIndex)
+					{
+
+						case 0:
+							GenerateScope = false;
+							GenerateException = false;
+							break;
+						case 1:
+							GenerateScope = true;
+							GenerateException = false;
+							break;
+						case 2:
+							GenerateScope = false;
+							GenerateException = true;
+							break;
+						case 3:
+							GenerateScope = true;
+							GenerateException = true;
+							break;
+					}
+				}
+			}
+
 			private readonly ILogger _logger;
 			private readonly LogLevel _logLevelFilter;
 			private readonly LogLevel[] _logLevels;
-			private readonly Dictionary<LogLevel, bool> _scopeGeneration;
+			private readonly Dictionary<LogLevel, LogGenerationRules> _generationRules;
 
 			public int ExpectedStatements { get; private set; }
 
@@ -39,7 +79,7 @@ namespace LogLite.Tests
 					LogLevel.Error,
 					LogLevel.Critical
 				};
-				_scopeGeneration = _logLevels.ToDictionary(l => l, l => false);
+				_generationRules = _logLevels.ToDictionary(l => l, l => new LogGenerationRules());
 
 				ExpectedStatements = 0;
 			}
@@ -55,19 +95,30 @@ namespace LogLite.Tests
 			private void GenerateLogStatement(int index)
 			{
 				LogLevel logLevel = _logLevels[index % _logLevels.Length];
+				LogGenerationRules generationRules = _generationRules[logLevel];
+				Exception? exception = null;
 
-				bool includeScope = _scopeGeneration[logLevel];
 				string statement = $"statement {index}";
-				string statementScope = $"scope for {statement}";			
+				string statementScope = $"scope for {statement}";	
 
 				using IDisposable scope = _logger.BeginScope(statementScope);
 
-				if (!includeScope)
+				if (!generationRules.GenerateScope)
 				{
 					scope.Dispose();
 				}
 
-				_scopeGeneration[logLevel] = !includeScope;
+				if (generationRules.GenerateException)
+				{
+					try
+					{
+						throw new Exception($"exception for {statement}");
+					} 
+					catch (Exception ex)
+					{
+						exception = ex;
+					}
+				}
 				
 				switch (logLevel)
 				{
@@ -81,13 +132,34 @@ namespace LogLite.Tests
 						_logger.Information(statement);
 						break;
 					case LogLevel.Warning:
-						_logger.Warning(statement);
+						if (generationRules.GenerateException)
+						{
+							_logger.Warning(statement, exception);
+						}
+						else
+						{
+							_logger.Warning(statement);
+						}
 						break;
 					case LogLevel.Error:
-						_logger.Error(statement);
+						if (generationRules.GenerateException)
+						{
+							_logger.Error(statement, exception);
+						}
+						else
+						{
+							_logger.Error(statement);
+						}
 						break;
 					case LogLevel.Critical:
-						_logger.Critical(statement);
+						if (generationRules.GenerateException)
+						{
+							_logger.Critical(statement, exception);
+						}
+						else
+						{
+							_logger.Critical(statement);
+						}
 						break;
 				}
 
@@ -95,6 +167,8 @@ namespace LogLite.Tests
 				{
 					ExpectedStatements++;
 				}
+
+				generationRules.UpdateRule();
 			}
 		}
 

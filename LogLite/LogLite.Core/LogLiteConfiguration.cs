@@ -10,7 +10,9 @@ namespace LogLite.Core
 
 		private static readonly Func<string, Exception, string> DefaultLogFormatter = (string message, Exception exception) =>
 		{
-			return message;
+			return exception == null
+				? message
+				: $"{message} - {exception.Message} - \"{exception.StackTrace}\"";
 		};
 
 		internal static List<ILoggerSink> LoggerSinks { get; set; }
@@ -43,7 +45,7 @@ namespace LogLite.Core
 
 		public static void SetLogFormatter(Func<string, Exception, string> formatter)
 		{
-
+			LogFormatter = formatter;
 		}
 	}
 }
