@@ -43,7 +43,7 @@ namespace LogLite.Tests.SinkTests
 		[DataRow(LogLevel.Warning)]
 		[DataRow(LogLevel.Error)]
 		[DataRow(LogLevel.Critical)]
-		public void TestFileLoggerSinkDisposalFlushesAllStatements(LogLevel logLevel)
+		public void TestEventLogLoggerSinkDisposalFlushesAllStatements(LogLevel logLevel)
 		{
 			ILoggerFactory loggerFactory = new LoggerFactory();
 
