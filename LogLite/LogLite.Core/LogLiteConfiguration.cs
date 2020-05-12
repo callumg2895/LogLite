@@ -1,4 +1,5 @@
 ﻿using LogLite.Core.Interface;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 
@@ -7,6 +8,7 @@ namespace LogLite.Core
 	public static class LogLiteConfiguration
 	{
 		private const string DefaultDateTimeFormat = "dd-MM-yyyy HH:mm:ss fff";
+		private const LogLevel DefaultScopeMessageLogLevel = LogLevel.Debug;
 
 		private static readonly Func<string, Exception, string> DefaultLogFormatter = (string message, Exception exception) =>
 		{
@@ -15,17 +17,20 @@ namespace LogLite.Core
 				: $"{message} - {exception.Message} - \"{exception.StackTrace}\"";
 		};
 
-		internal static List<ILoggerSink> LoggerSinks { get; set; }
+		public static LogLevel ScopeMessageLogLevel { get; private set; }
 
-		internal static string DateTimeFormat { get; set; }
+		public static List<ILoggerSink> LoggerSinks { get; private set; }
 
-		internal static Func<string, Exception, string> LogFormatter { get; set; }
+		public static string DateTimeFormat { get; private set; }
+
+		public static Func<string, Exception, string> LogFormatter { get; private set; }
 
 		static LogLiteConfiguration()
 		{
 			LoggerSinks = new List<ILoggerSink>();
 			DateTimeFormat = DefaultDateTimeFormat;
 			LogFormatter = DefaultLogFormatter;
+			ScopeMessageLogLevel = DefaultScopeMessageLogLevel;
 		}
 
 		public static void AddSink(ILoggerSink sink)
@@ -46,6 +51,11 @@ namespace LogLite.Core
 		public static void SetLogFormatter(Func<string, Exception, string> formatter)
 		{
 			LogFormatter = formatter;
+		}
+
+		public static void SetScopeMessageLogLevel(LogLevel logLevel)
+		{
+			ScopeMessageLogLevel = logLevel;
 		}
 	}
 }

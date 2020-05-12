@@ -3,6 +3,7 @@ using LogLite.Core.Util;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 
@@ -10,18 +11,26 @@ namespace LogLite.Core
 {
 	public sealed class LogLiteLogger : IDisposable, ILogger
 	{
-		private class LoggerScope : IDisposable
+		private sealed class LoggerScope<TState> : IDisposable
 		{
 			private readonly LogLiteLogger _logger;
 
-			internal LoggerScope(LogLiteLogger logger)
+			internal readonly Stopwatch Stopwatch;
+			internal readonly TState State;
+
+			internal LoggerScope(LogLiteLogger logger, TState state)
 			{
 				_logger = logger;
+				Stopwatch = new Stopwatch();
+				State = state;
+
+				Stopwatch.Start();
 			}
 
 			public void Dispose()
 			{
-				_logger.EndScope();
+				Stopwatch.Stop();
+				_logger.EndScope(this);
 			}
 		}
 
@@ -111,18 +120,27 @@ namespace LogLite.Core
 
 			int threadHash = Thread.CurrentThread.GetHashCode();
 			string? scopeMessage = state.ToString();
+			string logMessage = $"entered scope '{scopeMessage}'";
 
 			lock (_scopeLookupLock)
 			{
 				_scopeLookup.TryAdd(threadHash, scopeMessage!);
 			}
 
-			return new LoggerScope(this);
+			Log(LogLiteConfiguration.ScopeMessageLogLevel, new EventId(), logMessage, null!, LogLiteConfiguration.LogFormatter);
+
+			return new LoggerScope<TState>(this, state);
 		}
 
-		private void EndScope()
+		private void EndScope<TState>(LoggerScope<TState> scope)
 		{
+			TState state = scope.State;
+
 			int threadHash = Thread.CurrentThread.GetHashCode();
+			string? scopeMessage = state?.ToString();
+			string logMessage = $"exited scope '{scopeMessage}' ({scope.Stopwatch.ElapsedMilliseconds}ms)";
+
+			Log(LogLiteConfiguration.ScopeMessageLogLevel, new EventId(), logMessage, null!, LogLiteConfiguration.LogFormatter);
 
 			lock (_scopeLookupLock)
 			{

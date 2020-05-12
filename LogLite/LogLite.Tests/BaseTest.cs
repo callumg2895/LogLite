@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace LogLite.Tests
 {
@@ -94,6 +95,7 @@ namespace LogLite.Tests
 
 			private void GenerateLogStatement(int index)
 			{
+				IDisposable scope = null;
 				LogLevel logLevel = _logLevels[index % _logLevels.Length];
 				LogGenerationRules generationRules = _generationRules[logLevel];
 				Exception? exception = null;
@@ -101,11 +103,14 @@ namespace LogLite.Tests
 				string statement = $"statement {index}";
 				string statementScope = $"scope for {statement}";	
 
-				using IDisposable scope = _logger.BeginScope(statementScope);
-
-				if (!generationRules.GenerateScope)
+				if (generationRules.GenerateScope)
 				{
-					scope.Dispose();
+					scope = _logger.BeginScope(statementScope);
+
+					if (LogLiteConfiguration.ScopeMessageLogLevel >= _logLevelFilter)
+					{
+						ExpectedStatements += 2;
+					}
 				}
 
 				if (generationRules.GenerateException)
@@ -169,6 +174,7 @@ namespace LogLite.Tests
 				}
 
 				generationRules.UpdateRule();
+				scope?.Dispose();
 			}
 		}
 
