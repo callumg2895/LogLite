@@ -122,12 +122,12 @@ namespace LogLite.Core
 			string? scopeMessage = state.ToString();
 			string logMessage = $"entered scope '{scopeMessage}'";
 
+			Log(LogLiteConfiguration.ScopeMessageLogLevel, new EventId(), logMessage, null!, LogLiteConfiguration.LogFormatter);
+
 			lock (_scopeLookupLock)
 			{
 				_scopeLookup.TryAdd(threadHash, scopeMessage!);
 			}
-
-			Log(LogLiteConfiguration.ScopeMessageLogLevel, new EventId(), logMessage, null!, LogLiteConfiguration.LogFormatter);
 
 			return new LoggerScope<TState>(this, state);
 		}
@@ -140,12 +140,12 @@ namespace LogLite.Core
 			string? scopeMessage = state?.ToString();
 			string logMessage = $"exited scope '{scopeMessage}' ({scope.Stopwatch.ElapsedMilliseconds}ms)";
 
-			Log(LogLiteConfiguration.ScopeMessageLogLevel, new EventId(), logMessage, null!, LogLiteConfiguration.LogFormatter);
-
 			lock (_scopeLookupLock)
 			{
 				_scopeLookup.Remove(threadHash);
 			}
+
+			Log(LogLiteConfiguration.ScopeMessageLogLevel, new EventId(), logMessage, null!, LogLiteConfiguration.LogFormatter);
 		}
 
 		private string GetCurrentScope()
