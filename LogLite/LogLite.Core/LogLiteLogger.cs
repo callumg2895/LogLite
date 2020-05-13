@@ -120,9 +120,13 @@ namespace LogLite.Core
 
 			int threadHash = Thread.CurrentThread.GetHashCode();
 			string? scopeMessage = state.ToString();
-			string logMessage = $"entered scope '{scopeMessage}'";
 
-			Log(LogLiteConfiguration.ScopeMessageLogLevel, new EventId(), logMessage, null!, LogLiteConfiguration.LogFormatter);
+			if (LogLiteConfiguration.EnableScopeMessages)
+			{
+				string logMessage = $"entered scope '{scopeMessage}'";
+
+				Log(LogLiteConfiguration.ScopeMessageLogLevel, new EventId(), logMessage, null!, LogLiteConfiguration.LogFormatter);
+			}
 
 			lock (_scopeLookupLock)
 			{
@@ -138,14 +142,18 @@ namespace LogLite.Core
 
 			int threadHash = Thread.CurrentThread.GetHashCode();
 			string? scopeMessage = state?.ToString();
-			string logMessage = $"exited scope '{scopeMessage}' ({scope.Stopwatch.ElapsedMilliseconds}ms)";
-
+			
 			lock (_scopeLookupLock)
 			{
 				_scopeLookup.Remove(threadHash);
 			}
 
-			Log(LogLiteConfiguration.ScopeMessageLogLevel, new EventId(), logMessage, null!, LogLiteConfiguration.LogFormatter);
+			if (LogLiteConfiguration.EnableScopeMessages)
+			{
+				string logMessage = $"exited scope '{scopeMessage}' ({scope.Stopwatch.ElapsedMilliseconds}ms)";
+
+				Log(LogLiteConfiguration.ScopeMessageLogLevel, new EventId(), logMessage, null!, LogLiteConfiguration.LogFormatter);
+			}
 		}
 
 		private string GetCurrentScope()

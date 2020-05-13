@@ -19,6 +19,8 @@ namespace LogLite.Core
 
 		public static LogLevel ScopeMessageLogLevel { get; private set; }
 
+		public static bool EnableScopeMessages { get; set; }
+
 		public static List<ILoggerSink> LoggerSinks { get; private set; }
 
 		public static string DateTimeFormat { get; private set; }
@@ -31,6 +33,7 @@ namespace LogLite.Core
 			DateTimeFormat = DefaultDateTimeFormat;
 			LogFormatter = DefaultLogFormatter;
 			ScopeMessageLogLevel = DefaultScopeMessageLogLevel;
+			EnableScopeMessages = false;
 		}
 
 		public static void AddSink(ILoggerSink sink)

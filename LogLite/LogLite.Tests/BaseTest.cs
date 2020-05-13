@@ -144,7 +144,7 @@ namespace LogLite.Tests
 					return null;
 				}
 
-				if (LogLiteConfiguration.ScopeMessageLogLevel >= _logLevelFilter)
+				if (LogLiteConfiguration.EnableScopeMessages && LogLiteConfiguration.ScopeMessageLogLevel >= _logLevelFilter)
 				{
 					ExpectedStatements += 2;
 				}
@@ -156,6 +156,7 @@ namespace LogLite.Tests
 		[AssemblyInitialize]
 		public static void AssemblyInitialize(TestContext context)
 		{
+			LogLiteConfiguration.EnableScopeMessages = true;
 			LogLiteConfiguration.SetScopeMessageLogLevel(LogLevel.Critical);
 		}
 
