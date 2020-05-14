@@ -13,6 +13,7 @@ namespace LogLite.Core
 		private string _state;
 		private string _scope;
 		private string _category;
+		private string _dateTime;
 
 		internal LogStatement(
 			LogLevel logLevel,
@@ -27,24 +28,28 @@ namespace LogLite.Core
 			_state = state;
 			_category = category;
 			_scope = scope;
+
+			/*
+			 * We must generate the date message component in the constructor, to make sure we capture exactly when
+			 * this log statement was generated. Otherwise we might accidentally output the time at which it was 
+			 * written, which is not guaranteed to be the same thing.
+			 */
+
+			_dateTime = DateTime.Now.ToString(LogLiteConfiguration.DateTimeFormat);
 		}
 
 		public override string ToString()
 		{
 			StringBuilder statement = new StringBuilder();
 
-			string dateMessage = DateTime.Now.ToString(LogLiteConfiguration.DateTimeFormat);
-			string scopeMessage = _scope;
+			statement.Append($"[{_dateTime}] ");
+			statement.Append($"[{_category}] ");
+			statement.Append($"[{_eventId}] ");
+			statement.Append($"[{LogLevel}] ");
 
-			statement
-				.Append($"[{dateMessage}] ")
-				.Append($"[{_category}] ")
-				.Append($"[{_eventId}] ")
-				.Append($"[{LogLevel}] ");
-
-			if (!string.IsNullOrEmpty(scopeMessage))
+			if (!string.IsNullOrEmpty(_scope))
 			{
-				statement.Append($"[{scopeMessage}] ");
+				statement.Append($"[{_scope}] ");
 			}
 
 			statement.Append($" {_state}");
