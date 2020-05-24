@@ -47,7 +47,7 @@ steps:
     command: 'pack'
     packagesToPack: '**/LogLite.Core.csproj'
     packDestination: '$(Build.ArtifactStagingDirectory)'
-    versioningScheme: byPrereleaseNumber
+    versioningScheme: off
     majorVersion: '$(Major)'
     minorVersion: '$(Minor)'
     patchVersion: '$(Patch)'
