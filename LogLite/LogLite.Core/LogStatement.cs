@@ -43,10 +43,10 @@ namespace LogLite.Core
 			StringBuilder statement = new StringBuilder();
 
 			statement.Append($"[{_dateTime}] ");
+			statement.Append($"[{GetFormatedLogLevel()}] ");
 			statement.Append($"[{_category}] ");
 			statement.Append($"[{_eventId}] ");
-			statement.Append($"[{LogLevel}] ");
-
+			
 			if (!string.IsNullOrEmpty(_scope))
 			{
 				statement.Append($"[{_scope}] ");
@@ -56,5 +56,21 @@ namespace LogLite.Core
 
 			return statement.ToString();
 		}
+
+		private string GetFormatedLogLevel()
+        {
+            switch (LogLevel) 
+			{
+				case LogLevel.Critical:		return "CRT";
+				case LogLevel.Error:		return "ERR";
+				case LogLevel.Warning:		return "WRN";
+				case LogLevel.Information:	return "INF";
+				case LogLevel.Debug:		return "DBG";
+				case LogLevel.Trace:		return "TRC";
+				default:
+					throw new ArgumentException($"Unrecognised LogLevel {LogLevel}");
+			}
+
+        }
 	}
 }
