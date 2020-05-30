@@ -4,8 +4,10 @@ using System.Threading;
 
 namespace LogLite.Core.Util
 {
-	public class RunQueue : IDisposable
+	internal class RunQueue : IDisposable
 	{
+		private const int WaitTimeoutMilliseconds = 5000;
+
 		private readonly Queue<Action> _actions;
 		private readonly Thread _thread;
 		private readonly CancellationTokenSource _cancellationTokenSource;
@@ -82,7 +84,12 @@ namespace LogLite.Core.Util
 
 			lock (_lock)
 			{
-				Monitor.Wait(_lock);
+				if (_cancellationTokenSource.IsCancellationRequested)
+				{
+					return;
+				}
+
+				Monitor.Wait(_lock, WaitTimeoutMilliseconds);
 			}
 		}
 	}
