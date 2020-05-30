@@ -14,10 +14,11 @@ namespace LogLite.Core.Sinks
 
 		protected readonly CancellationTokenSource _cancellationTokenSource;
 		protected readonly Queue<LogStatement> _logQueue;
-		protected readonly RunQueue _runQueue;
 		protected readonly LogLevel _logLevel;
 
 		protected readonly object _lock;
+
+		private readonly RunQueue _runQueue;
 
 		public Sink(LogLevel? filter)
 		{
