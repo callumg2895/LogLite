@@ -6,8 +6,8 @@
 trigger:
 - trunk
 - master
-- 1.0.x-staging
-- 1.0.x
+- 1.1.x-staging
+- 1.1.x
 
 pool:
   vmImage: 'windows-latest'
