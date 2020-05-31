@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -15,6 +16,8 @@ namespace LogLite.Tests
 	[TestClass]
 	public class BaseTest
 	{
+		private static DebugOutputSink _debugOutputSink;
+
 		private class LogGenerationRules
 		{
 			private const int MaxRuleIndex = 4;
@@ -156,14 +159,17 @@ namespace LogLite.Tests
 		[AssemblyInitialize]
 		public static void AssemblyInitialize(TestContext context)
 		{
+			_debugOutputSink = new DebugOutputSink();
+
 			LogLiteConfiguration.EnableScopeMessages = true;
 			LogLiteConfiguration.SetScopeMessageLogLevel(LogLevel.Critical);
+			LogLiteConfiguration.AddSink(_debugOutputSink);
 		}
 
 		[AssemblyCleanup]
 		public static void AssemblyCleanup()
 		{
-
+			LogLiteConfiguration.RemoveSink(_debugOutputSink);
 		}
 	}
 }
